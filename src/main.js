@@ -88,6 +88,31 @@ function generateMaze(width, height) {
     }
     maze[1][1] = 0;
     carve(1, 1);
+
+    // 추가 통로 생성 (20% 확률로 벽을 뚫음)
+    for (let z = 1; z < height - 1; z++) {
+        for (let x = 1; x < width - 1; x++) {
+            if (maze[z][x] === 1 && Math.random() < 0.2) {
+                // 상하좌우 중 랜덤하게 한 방향으로 통로 생성
+                const dirs = [
+                    [0, -1],
+                    [0, 1],
+                    [-1, 0],
+                    [1, 0],
+                ].sort(() => Math.random() - 0.5);
+
+                for (const [dx, dz] of dirs) {
+                    const nx = x + dx;
+                    const nz = z + dz;
+                    if (nx > 0 && nx < width - 1 && nz > 0 && nz < height - 1 && maze[nz][nx] === 0) {
+                        maze[z][x] = 0;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     // 출구 만들기 (오른쪽 아래)
     maze[height - 1][width - 2] = 0;
     maze[height - 1][width - 1] = 0;
