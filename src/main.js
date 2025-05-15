@@ -242,13 +242,13 @@ let gameEnded = false;
 function astar(maze, start, goal) {
     const [sx, sz] = start;
     const [gx, gz] = goal;
-    const w = maze[0].length,
-        h = maze.length;
+    const w = maze[0].length;
+    const h = maze.length;
     const open = [];
     const closed = Array.from({ length: h }, () => Array(w).fill(false));
     const cameFrom = Array.from({ length: h }, () => Array(w).fill(null));
-    const gScore = Array.from({ length: h }, () => Array(w).fill(Infinity));
-    const fScore = Array.from({ length: h }, () => Array(w).fill(Infinity));
+    const gScore = Array.from({ length: h }, () => Array(w).fill(Number.POSITIVE_INFINITY));
+    const fScore = Array.from({ length: h }, () => Array(w).fill(Number.POSITIVE_INFINITY));
     function hCost(x, z) {
         return Math.abs(x - gx) + Math.abs(z - gz);
     }
@@ -267,8 +267,8 @@ function astar(maze, start, goal) {
         if (x === gx && z === gz) {
             // 경로 복원
             const path = [];
-            let cx = x,
-                cz = z;
+            let cx = x;
+            let cz = z;
             while (cameFrom[cz][cx]) {
                 path.push([cx, cz]);
                 [cx, cz] = cameFrom[cz][cx];
@@ -278,8 +278,8 @@ function astar(maze, start, goal) {
         }
         closed[z][x] = true;
         for (const [dx, dz] of dirs) {
-            const nx = x + dx,
-                nz = z + dz;
+            const nx = x + dx;
+            const nz = z + dz;
             if (nx < 0 || nx >= w || nz < 0 || nz >= h) continue;
             if (maze[nz][nx] !== 0 || closed[nz][nx]) continue;
             const tentativeG = gScore[z][x] + 1;
