@@ -1,8 +1,13 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+// 게임 상태 관리
+let gameState = 'menu'; // 'menu', 'playing', 'gameover'
+let difficulty = 'medium'; // 'easy', 'medium', 'hard'
+
 // 씬, 카메라, 렌더러 생성
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb); // 하늘색 배경
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -10,6 +15,86 @@ renderer.setPixelRatio(window.devicePixelRatio);
 
 document.querySelector('#app').innerHTML = ''; // 기존 텍스트 제거
 document.querySelector('#app').appendChild(renderer.domElement);
+
+// 메인 메뉴 UI 생성
+const menuDiv = document.createElement('div');
+menuDiv.style.position = 'fixed';
+menuDiv.style.top = '50%';
+menuDiv.style.left = '50%';
+menuDiv.style.transform = 'translate(-50%, -50%)';
+menuDiv.style.textAlign = 'center';
+menuDiv.style.zIndex = '100';
+
+const titleDiv = document.createElement('div');
+titleDiv.textContent = 'SAHUR MAZE RUNNER';
+titleDiv.style.fontSize = '4rem';
+titleDiv.style.fontWeight = 'bold';
+titleDiv.style.color = '#fff';
+titleDiv.style.textShadow = '0 0 10px #222, 0 0 20px #222';
+titleDiv.style.marginBottom = '2rem';
+menuDiv.appendChild(titleDiv);
+
+const difficultyDiv = document.createElement('div');
+difficultyDiv.style.marginBottom = '2rem';
+
+const difficulties = ['easy', 'medium', 'hard'];
+difficulties.forEach((diff) => {
+    const btn = document.createElement('button');
+    btn.textContent = diff.toUpperCase();
+    btn.style.fontSize = '2rem';
+    btn.style.margin = '0.5rem';
+    btn.style.padding = '0.5em 1.5em';
+    btn.style.borderRadius = '1em';
+    btn.style.border = 'none';
+    btn.style.background = '#222';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+    btn.onclick = () => {
+        difficulty = diff;
+        startGame();
+    };
+    difficultyDiv.appendChild(btn);
+});
+menuDiv.appendChild(difficultyDiv);
+
+document.body.appendChild(menuDiv);
+
+// 게임 시작 함수
+function startGame() {
+    gameState = 'playing';
+    menuDiv.style.display = 'none';
+    uiDiv.style.display = 'none';
+
+    // 난이도에 따른 설정
+    let mazeSize, enemySpeed;
+    switch (difficulty) {
+        case 'easy':
+            mazeSize = { width: 11, height: 9 };
+            enemySpeed = 0.03;
+            break;
+        case 'medium':
+            mazeSize = { width: 15, height: 11 };
+            enemySpeed = 0.05;
+            break;
+        case 'hard':
+            mazeSize = { width: 19, height: 13 };
+            enemySpeed = 0.07;
+            break;
+    }
+
+    // 게임 초기화
+    gameEnded = false;
+    mazeMap = generateMaze(mazeSize.width, mazeSize.height);
+    buildMaze();
+    spawnPlayer();
+    spawnEnemy();
+    enemyPath = [];
+    enemyPathIdx = 0;
+    enemyPathTimer = 0;
+
+    // 포인터 락 활성화
+    renderer.domElement.requestPointerLock();
+}
 
 // 브라우저 리사이즈 시 캔버스 크기 자동 조정
 window.addEventListener('resize', () => {
@@ -28,9 +113,9 @@ Object.assign(document.body.style, {
 });
 
 // 조명 추가
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // 은은한 전체 조명
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
 scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // 태양빛 같은 방향성 조명
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 directionalLight.position.set(5, 10, 7.5);
 scene.add(directionalLight);
 
@@ -304,6 +389,15 @@ let enemyPathTimer = 0;
 function animate() {
     requestAnimationFrame(animate);
 
+    if (gameState === 'menu') {
+        // 메뉴 화면에서는 카메라 회전 애니메이션
+        camera.position.x = Math.sin(Date.now() * 0.001) * 10;
+        camera.position.z = Math.cos(Date.now() * 0.001) * 10;
+        camera.lookAt(0, 0, 0);
+        renderer.render(scene, camera);
+        return;
+    }
+
     if (gameEnded) return;
 
     if (player) {
@@ -388,12 +482,7 @@ function animate() {
         // --- 게임 오버 판정 ---
         const dist = enemy.position.distanceTo(player.position);
         if (dist < 1.5) {
-            gameEnded = true;
-            uiDiv.style.display = 'block';
-            uiDivText.textContent = 'GAME OVER!';
-            setTimeout(() => {
-                document.exitPointerLock?.();
-            }, 100);
+            gameOver();
         }
     }
 
@@ -406,12 +495,7 @@ function animate() {
             (Math.round(px) === mazeMap[0].length - 1 || Math.round(px) === mazeMap[0].length - 2) &&
             Math.round(pz) === mazeMap.length - 1
         ) {
-            gameEnded = true;
-            uiDiv.style.display = 'block';
-            uiDivText.textContent = '탈출 성공!';
-            setTimeout(() => {
-                document.exitPointerLock?.();
-            }, 100);
+            escapeSuccess();
         }
     }
 
@@ -448,17 +532,34 @@ resetBtn.style.cursor = 'pointer';
 resetBtn.style.display = 'block';
 resetBtn.onclick = () => {
     uiDiv.style.display = 'none';
+    menuDiv.style.display = 'block';
+    gameState = 'menu';
     gameEnded = false;
-    mazeMap = generateMaze(15, 11);
-    buildMaze();
-    spawnPlayer();
-    spawnEnemy();
-    enemyPath = [];
-    enemyPathIdx = 0;
-    enemyPathTimer = 0;
     document.exitPointerLock?.();
 };
 uiDiv.appendChild(resetBtn);
 document.body.appendChild(uiDiv);
+
+// 게임오버 처리 수정
+function gameOver() {
+    gameState = 'gameover';
+    gameEnded = true;
+    uiDiv.style.display = 'block';
+    uiDivText.textContent = 'GAME OVER!';
+    setTimeout(() => {
+        document.exitPointerLock?.();
+    }, 100);
+}
+
+// 탈출 성공 처리 수정
+function escapeSuccess() {
+    gameState = 'gameover';
+    gameEnded = true;
+    uiDiv.style.display = 'block';
+    uiDivText.textContent = '탈출 성공!';
+    setTimeout(() => {
+        document.exitPointerLock?.();
+    }, 100);
+}
 
 animate();
