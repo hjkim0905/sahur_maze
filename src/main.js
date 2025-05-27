@@ -387,7 +387,7 @@ function animate() {
         }
         // --- 게임 오버 판정 ---
         const dist = enemy.position.distanceTo(player.position);
-        if (dist < 1.0) {
+        if (dist < 1.5) {
             gameEnded = true;
             uiDiv.style.display = 'block';
             uiDivText.textContent = 'GAME OVER!';
