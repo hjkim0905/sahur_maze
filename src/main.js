@@ -34,7 +34,12 @@ let mazeMap;
 const wallSize = 2; // 벽 하나의 크기(2x2x2)
 const wallHeight = 2; // 벽의 높이(2)
 const wallGeometry = new THREE.BoxGeometry(wallSize, wallHeight, wallSize);
-const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x333366, transparent: true, opacity: 0.6 });
+const wallMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8b4513, // 갈색 벽
+    roughness: 0.7,
+    metalness: 0.2,
+    transparent: false,
+});
 let wallMeshes = [];
 
 // 씬, 카메라, 렌더러 생성
@@ -230,38 +235,77 @@ function updateStaminaBar() {
 
 // 미로 생성 함수 (반복문 기반)
 function generateMaze(width, height) {
+    // 미로 초기화 (모든 칸을 벽으로)
     const maze = Array.from({ length: height }, () => Array(width).fill(1));
-    const stack = [];
-    const visited = new Set();
+
+    // 시작점과 출구 위치 설정
+    const startX = 1;
+    const startZ = 1;
+    const exitX = width - 3; // 출구 위치 조정
+    const exitZ = height - 3; // 출구 위치 조정
 
     // 시작점 설정
-    maze[1][1] = 0;
-    stack.push([1, 1]);
-    visited.add('1,1');
+    maze[startZ][startX] = 0;
 
-    // DFS를 반복문으로 구현
+    // 출구 생성 (3x3 크기)
+    for (let z = exitZ; z <= exitZ + 2; z++) {
+        for (let x = exitX; x <= exitX + 2; x++) {
+            maze[z][x] = 0;
+        }
+    }
+
+    // 시작점에서 출구까지의 기본 경로 생성
+    let x = startX;
+    let z = startZ;
+
+    // 오른쪽으로 이동
+    while (x < exitX - 1) {
+        x++;
+        maze[z][x] = 0;
+    }
+
+    // 아래로 이동
+    while (z < exitZ - 1) {
+        z++;
+        maze[z][x] = 0;
+    }
+
+    // 마지막 연결
+    maze[z][x + 1] = 0;
+    maze[z][x + 2] = 0;
+    maze[z][x + 3] = 0;
+
+    // DFS를 사용한 추가 경로 생성
+    const stack = [];
+    const visited = new Set();
+    stack.push([startX, startZ]);
+    visited.add(`${startX},${startZ}`);
+
     while (stack.length > 0) {
-        const [x, y] = stack[stack.length - 1];
+        const [x, z] = stack[stack.length - 1];
         const directions = [
-            [0, -2],
-            [2, 0],
-            [0, 2],
-            [-2, 0],
+            [0, -2], // 위
+            [2, 0], // 오른쪽
+            [0, 2], // 아래
+            [-2, 0], // 왼쪽
         ].sort(() => Math.random() - 0.5);
 
         let moved = false;
-        for (const [dx, dy] of directions) {
+        for (const [dx, dz] of directions) {
             const nx = x + dx;
-            const ny = y + dy;
-            const key = `${nx},${ny}`;
+            const nz = z + dz;
+            const key = `${nx},${nz}`;
 
-            if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1 && !visited.has(key)) {
+            // 출구 주변은 건너뛰기
+            if (Math.abs(nx - exitX) <= 3 && Math.abs(nz - exitZ) <= 3) continue;
+
+            if (nz > 0 && nz < height - 1 && nx > 0 && nx < width - 1 && !visited.has(key)) {
                 // 벽 제거
-                maze[y + dy / 2][x + dx / 2] = 0;
-                maze[ny][nx] = 0;
+                maze[z + dz / 2][x + dx / 2] = 0;
+                maze[nz][nx] = 0;
 
                 // 새 위치로 이동
-                stack.push([nx, ny]);
+                stack.push([nx, nz]);
                 visited.add(key);
                 moved = true;
                 break;
@@ -273,24 +317,28 @@ function generateMaze(width, height) {
         }
     }
 
-    // 끝점 설정
-    maze[height - 2][width - 2] = 0;
+    // 난이도에 따른 추가 통로 생성
+    const extraPathProbability = difficulty === 'easy' ? 0.25 : difficulty === 'medium' ? 0.15 : 0.08;
 
-    // 추가 통로 생성 (20% 확률)
-    for (let y = 1; y < height - 1; y++) {
+    // 추가 통로 생성 (출구 주변 제외)
+    for (let z = 1; z < height - 1; z++) {
         for (let x = 1; x < width - 1; x++) {
-            if (maze[y][x] === 1 && Math.random() < 0.2) {
+            // 출구 주변 3칸은 건너뛰기
+            if (Math.abs(x - exitX) <= 3 && Math.abs(z - exitZ) <= 3) continue;
+
+            if (maze[z][x] === 1 && Math.random() < extraPathProbability) {
                 const dirs = [
                     [0, -1],
                     [0, 1],
                     [-1, 0],
                     [1, 0],
-                ];
-                for (const [dx, dy] of dirs) {
+                ].sort(() => Math.random() - 0.5);
+
+                for (const [dx, dz] of dirs) {
                     const nx = x + dx;
-                    const ny = y + dy;
-                    if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1 && maze[ny][nx] === 0) {
-                        maze[y][x] = 0;
+                    const nz = z + dz;
+                    if (nx > 0 && nx < width - 1 && nz > 0 && nz < height - 1 && maze[nz][nx] === 0) {
+                        maze[z][x] = 0;
                         break;
                     }
                 }
@@ -380,7 +428,16 @@ window.addEventListener('keyup', (e) => {
 
 // 씬 생성 후, 바닥 추가
 const groundGeometry = new THREE.PlaneGeometry(100, 100);
-const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0x808080, // 회색 바닥
+    roughness: 0.8,
+    metalness: 0.1,
+    map: new THREE.TextureLoader().load('/textures/stone_tiles.jpg', (texture) => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(20, 20);
+    }),
+});
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
 ground.position.y = 0; // y=0에 바닥
@@ -612,13 +669,16 @@ function animate() {
 
     // --- 탈출 성공 판정 ---
     if (player) {
-        // 출구: 오른쪽 아래 2칸 중 하나에 도달하면 성공
-        const px = player.position.x / wallSize + mazeMap[0].length / 2;
-        const pz = player.position.z / wallSize + mazeMap.length / 2;
-        if (
-            (Math.round(px) === mazeMap[0].length - 1 || Math.round(px) === mazeMap[0].length - 2) &&
-            Math.round(pz) === mazeMap.length - 1
-        ) {
+        // 출구 위치 계산
+        const exitX = mazeMap[0].length - 3;
+        const exitZ = mazeMap.length - 3;
+
+        // 플레이어 위치를 미로 좌표로 변환
+        const px = Math.round(player.position.x / wallSize + mazeMap[0].length / 2);
+        const pz = Math.round(player.position.z / wallSize + mazeMap.length / 2);
+
+        // 출구 영역에 있는지 확인 (3x3 영역)
+        if (Math.abs(px - exitX) <= 1 && Math.abs(pz - exitZ) <= 1) {
             escapeSuccess();
         }
     }
@@ -636,19 +696,16 @@ function startGame() {
     updateStaminaBar();
 
     // 난이도에 따른 설정
-    let mazeSize, enemySpeed;
+    let mazeSize;
     switch (difficulty) {
         case 'easy':
-            mazeSize = { width: 11, height: 9 };
-            enemySpeed = 0.04;
+            mazeSize = { width: 25, height: 19 }; // 더 큰 미로
             break;
         case 'medium':
-            mazeSize = { width: 15, height: 11 };
-            enemySpeed = 0.06;
+            mazeSize = { width: 35, height: 25 }; // 더 큰 미로
             break;
         case 'hard':
-            mazeSize = { width: 19, height: 13 };
-            enemySpeed = 0.08;
+            mazeSize = { width: 45, height: 35 }; // 더 큰 미로
             break;
     }
 
@@ -662,7 +719,7 @@ function startGame() {
     enemyPathIdx = 0;
     enemyPathTimer = 0;
 
-    // 포인터 락 활성화 (안전하게 처리)
+    // 포인터 락 활성화
     try {
         if (renderer.domElement && document.body.contains(renderer.domElement)) {
             renderer.domElement.requestPointerLock();
@@ -683,15 +740,26 @@ function gameOver() {
     }, 100);
 }
 
-// 탈출 성공 처리 수정
+// 탈출 성공 판정 수정
 function escapeSuccess() {
-    gameState = 'gameover';
-    gameEnded = true;
-    uiDiv.style.display = 'block';
-    uiDivText.textContent = '탈출 성공!';
-    setTimeout(() => {
-        document.exitPointerLock?.();
-    }, 100);
+    // 출구 위치 계산
+    const exitX = mazeMap[0].length - 3;
+    const exitZ = mazeMap.length - 3;
+
+    // 플레이어 위치를 미로 좌표로 변환
+    const px = Math.round(player.position.x / wallSize + mazeMap[0].length / 2);
+    const pz = Math.round(player.position.z / wallSize + mazeMap.length / 2);
+
+    // 출구 영역에 있는지 확인 (3x3 영역)
+    if (Math.abs(px - exitX) <= 1 && Math.abs(pz - exitZ) <= 1) {
+        gameState = 'gameover';
+        gameEnded = true;
+        uiDiv.style.display = 'block';
+        uiDivText.textContent = '탈출 성공!';
+        setTimeout(() => {
+            document.exitPointerLock?.();
+        }, 100);
+    }
 }
 
 animate();
