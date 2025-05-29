@@ -29,6 +29,19 @@ let enemyPath = [];
 let enemyPathIdx = 0;
 let enemyPathTimer = 0;
 
+// 위험 조명 시스템 관련 변수들
+let dangerMode = false;
+let dangerIntensity = 0;
+let dangerTimer = 0;
+let originalAmbientIntensity = 0.6;
+let originalBgColor = 0x87ceeb;
+
+// 게임오버 카메라 관련 변수들 추가 (기존 변수들 아래에)
+let gameOverCameraTransition = false;
+let gameOverTimer = 0;
+let originalCameraPos = new THREE.Vector3();
+let originalCameraTarget = new THREE.Vector3();
+
 // 미로 관련 변수
 let mazeMap;
 const wallSize = 2; // 벽 하나의 크기(2x2x2)
@@ -69,6 +82,11 @@ directionalLight.shadow.camera.right = 20;
 directionalLight.shadow.camera.top = 20;
 directionalLight.shadow.camera.bottom = -20;
 scene.add(directionalLight);
+
+const dangerLight = new THREE.DirectionalLight(0xff0000, 0); // 빨간 조명
+dangerLight.position.set(0, 10, 0);
+dangerLight.castShadow = false; // 그림자 비활성화로 성능 향상
+scene.add(dangerLight);
 
 // 렌더러 DOM 요소 추가
 document.querySelector('#app').innerHTML = ''; // 기존 텍스트 제거
@@ -558,6 +576,97 @@ function floodFill(maze, visited, startX, startZ, width, height) {
     return area;
 }
 
+// 기존 위험 상태 관리 함수를 이걸로 교체하세요!
+function updateDangerMode(playerPos, enemyPos) {
+    if (!playerPos || !enemyPos) return;
+
+    const distance = playerPos.distanceTo(enemyPos);
+    const dangerDistance = 15; // 위험 거리 임계값 (8 → 15로 증가)
+    const criticalDistance = 6; // 심각한 위험 거리 (4 → 6으로 증가)
+
+    if (distance <= dangerDistance) {
+        // 위험 모드 활성화
+        if (!dangerMode) {
+            dangerMode = true;
+            dangerTimer = 0;
+        }
+
+        // 거리에 따른 위험 강도 계산 (가까울수록 강해짐)
+        const distanceRatio = Math.max(0, (dangerDistance - distance) / dangerDistance);
+        const targetIntensity = Math.min(1.2, distanceRatio * 2); // 최대 강도 증가
+
+        // 부드럽게 강도 조절
+        dangerIntensity += (targetIntensity - dangerIntensity) * 0.08; // 더 천천히 변화
+    } else {
+        // 위험 모드 비활성화
+        if (dangerMode && distance > dangerDistance + 3) {
+            // 히스테리시스 효과 증가
+            dangerMode = false;
+        }
+
+        // 점진적으로 강도 감소
+        dangerIntensity *= 0.92; // 더 천천히 감소
+        if (dangerIntensity < 0.01) {
+            dangerIntensity = 0;
+        }
+    }
+}
+
+// 기존 위험 조명 효과 함수를 이걸로 교체하세요!
+function applyDangerLighting() {
+    if (dangerIntensity > 0) {
+        dangerTimer += 1 / 60; // 60fps 기준
+
+        // 사이렌 효과 (더 빠르고 불규칙한 깜빡임)
+        const sirenSpeed = 4 + dangerIntensity * 6; // 더 빠른 깜빡임
+        const sirenEffect = (Math.sin(dangerTimer * sirenSpeed) + 1) / 2;
+
+        // 불규칙한 깜빡임 추가 (더 무서운 효과)
+        const randomFlicker = Math.sin(dangerTimer * sirenSpeed * 2.3) * 0.3;
+        const finalSirenEffect = Math.max(0, sirenEffect + randomFlicker);
+
+        // 위험 조명 강도 적용 (더 강하게)
+        const redIntensity = dangerIntensity * finalSirenEffect * 2.5; // 강도 증가
+        dangerLight.intensity = redIntensity;
+
+        // 주변광 더 어둡게 만들기
+        const ambientReduction = dangerIntensity * 0.85; // 더 어둡게
+        ambientLight.intensity = originalAmbientIntensity * (1 - ambientReduction);
+
+        // 배경색 더 어둡고 붉게
+        const darkenFactor = 1 - dangerIntensity * 0.7; // 더 어둡게
+        const redTint = dangerIntensity * 0.5; // 더 붉게
+
+        const newColor = new THREE.Color(
+            Math.min(1, (0x87 / 255) * darkenFactor + redTint),
+            Math.max(0, (0xce / 255) * darkenFactor * (1 - redTint * 0.8)),
+            Math.max(0, (0xeb / 255) * darkenFactor * (1 - redTint * 0.9))
+        );
+        scene.background = newColor;
+
+        // 방향성 조명 더 강하게 흔들리게
+        const lightShake = dangerIntensity * 0.5; // 더 강한 흔들림
+        const shakeEffect = Math.sin(dangerTimer * sirenSpeed * 1.7) * lightShake;
+        directionalLight.intensity = Math.max(0.2, 0.8 + shakeEffect);
+
+        // 추가 무서운 효과: 조명 위치도 약간 흔들리게
+        if (dangerIntensity > 0.5) {
+            const positionShake = dangerIntensity * 2;
+            directionalLight.position.x = 10 + Math.sin(dangerTimer * 8) * positionShake;
+            directionalLight.position.z = 10 + Math.cos(dangerTimer * 6) * positionShake;
+        }
+    } else {
+        // 원래 상태로 복구
+        dangerLight.intensity = 0;
+        ambientLight.intensity = originalAmbientIntensity;
+        scene.background = new THREE.Color(originalBgColor);
+        directionalLight.intensity = 0.8;
+
+        // 조명 위치 원상복구
+        directionalLight.position.set(10, 20, 10);
+    }
+}
+
 // 초기 미로 생성
 mazeMap = generateMaze(15, 11);
 
@@ -765,7 +874,14 @@ function animate() {
         return;
     }
 
-    if (gameEnded) return;
+    if (gameEnded) {
+        // 게임오버 카메라 전환 처리
+        if (gameState === 'gameover') {
+            updateGameOverCamera();
+        }
+        renderer.render(scene, camera);
+        return;
+    }
 
     if (player) {
         // 스태미나 관리
@@ -886,6 +1002,9 @@ function animate() {
         }
         // --- 게임 오버 판정 ---
         const dist = enemy.position.distanceTo(player.position);
+        updateDangerMode(player.position, enemy.position);
+        applyDangerLighting();
+
         if (dist < 1.5) {
             gameOver();
         }
@@ -937,6 +1056,14 @@ function startGame() {
     mazeMap = generateMaze(mazeSize.width, mazeSize.height);
     buildMaze();
     spawnPlayer();
+
+    // 플레이어 다시 보이게 만들기
+    setTimeout(() => {
+        if (player) {
+            player.visible = true;
+        }
+    }, 100); // 플레이어 로드 대기
+
     spawnEnemy();
     enemyPath = [];
     enemyPathIdx = 0;
@@ -954,13 +1081,112 @@ function startGame() {
 
 // 게임오버 처리 수정
 function gameOver() {
+    if (gameState === 'gameover') return; // 중복 호출 방지
+
     gameState = 'gameover';
     gameEnded = true;
-    uiDiv.style.display = 'block';
-    uiDivText.textContent = 'GAME OVER!';
+
+    // 게임오버 카메라 전환 시작
+    if (player && enemy) {
+        gameOverCameraTransition = true;
+        gameOverTimer = 0;
+
+        // 현재 카메라 위치 저장
+        originalCameraPos.copy(camera.position);
+        originalCameraTarget.copy(player.position);
+
+        // 플레이어 숨기기 (적의 앞모습에만 집중)
+        if (player) {
+            player.visible = false;
+        }
+
+        // 위험 조명 효과 즉시 중단
+        dangerLight.intensity = 0;
+        ambientLight.intensity = originalAmbientIntensity;
+        scene.background = new THREE.Color(originalBgColor);
+        directionalLight.intensity = 0.8;
+        directionalLight.position.set(10, 20, 10);
+    }
+
+    // UI는 카메라 전환 후에 표시 (2초 후로 단축)
     setTimeout(() => {
+        uiDiv.style.display = 'block';
+        uiDivText.textContent = 'GAME OVER!';
         document.exitPointerLock?.();
-    }, 100);
+    }, 2000);
+}
+
+// updateGameOverCamera 함수를 이렇게 수정하세요!
+function updateGameOverCamera() {
+    if (!gameOverCameraTransition || !enemy || !player) return;
+
+    gameOverTimer += 1 / 60; // 60fps 기준
+
+    const transitionDuration = 2.0; // 2초로 단축
+    const progress = Math.min(gameOverTimer / transitionDuration, 1);
+
+    // Easing 함수 (부드러운 전환)
+    const easeInOut = (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+    const smoothProgress = easeInOut(progress);
+
+    if (progress < 1) {
+        // === 적의 정면으로 카메라 이동 ===
+
+        const enemyPos = enemy.position.clone();
+        const playerPos = player.position.clone();
+
+        // 적이 바라보는 방향 계산 (플레이어 쪽)
+        const enemyDirection = new THREE.Vector3().subVectors(playerPos, enemyPos).normalize();
+
+        // 적의 정면에서 적을 바라보는 위치 (벽에 가려지지 않게)
+        const cameraDistance = 2.5;
+        const cameraHeight = 1.8;
+
+        // 적 정면 위치 계산 (적이 바라보는 방향의 반대쪽)
+        const targetCameraPos = enemyPos
+            .clone()
+            .add(enemyDirection.clone().multiplyScalar(cameraDistance)) // 적 앞쪽에 위치
+            .add(new THREE.Vector3(0, cameraHeight, 0));
+
+        // 적의 얼굴을 바라보는 목표점
+        const targetLookAt = enemyPos.clone().add(new THREE.Vector3(0, 1.2, 0));
+
+        // === 부드러운 카메라 전환 ===
+        camera.position.lerpVectors(originalCameraPos, targetCameraPos, smoothProgress);
+
+        // 시선 방향도 부드럽게 전환
+        const currentTarget = originalCameraTarget.clone().lerp(targetLookAt, smoothProgress);
+        camera.lookAt(currentTarget);
+
+        // 조명 효과
+        const dramaticLighting = 1 - smoothProgress * 0.3;
+        ambientLight.intensity = originalAmbientIntensity * dramaticLighting;
+        directionalLight.intensity = 0.8 + smoothProgress * 0.4;
+    } else {
+        // === 최종 시점: 적의 앞모습 완전히 고정 ===
+
+        gameOverCameraTransition = false;
+
+        const enemyPos = enemy.position.clone();
+        const playerPos = player.position.clone();
+
+        // 적이 바라보는 방향 (플레이어 쪽)
+        const enemyDirection = new THREE.Vector3().subVectors(playerPos, enemyPos).normalize();
+
+        // 적 정면에서 바라보는 최종 위치
+        const finalCameraPos = enemyPos
+            .clone()
+            .add(enemyDirection.clone().multiplyScalar(2.5))
+            .add(new THREE.Vector3(0, 1.8, 0));
+
+        camera.position.copy(finalCameraPos);
+        camera.lookAt(enemyPos.clone().add(new THREE.Vector3(0, 1.2, 0)));
+
+        // 최종 조명: 적을 드라마틱하게 비추기
+        ambientLight.intensity = originalAmbientIntensity * 0.7;
+        directionalLight.intensity = 1.2;
+        scene.background = new THREE.Color(0x2a2a2a);
+    }
 }
 
 function escapeSuccess() {
@@ -1005,6 +1231,11 @@ document.addEventListener('pointerlockchange', () => {
 });
 
 function onMouseMove(e) {
+    // 게임오버 상태에서는 카메라 조작 불가
+    if (gameState === 'gameover') {
+        return;
+    }
+
     if (viewMode === 'first') {
         // 1인칭 시점에서는 카메라 회전 (마우스 움직임과 자연스럽게)
         camera.rotation.y -= e.movementX * 0.01; // 좌우 회전
