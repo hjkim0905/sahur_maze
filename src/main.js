@@ -170,6 +170,225 @@ startBtn.style.cursor = 'pointer';
 startBtn.onclick = startGame;
 menuDiv.appendChild(startBtn);
 
+const tutorialBtn = document.createElement('button');
+tutorialBtn.textContent = '조작법 보기';
+tutorialBtn.style.fontSize = '2rem';
+tutorialBtn.style.padding = '0.5em 1.5em';
+tutorialBtn.style.borderRadius = '1em';
+tutorialBtn.style.border = 'none';
+tutorialBtn.style.background = '#2196F3';
+tutorialBtn.style.color = '#fff';
+tutorialBtn.style.cursor = 'pointer';
+tutorialBtn.style.marginTop = '1rem';
+tutorialBtn.onclick = showTutorial;
+menuDiv.appendChild(tutorialBtn);
+
+// 튜토리얼 모달 생성
+const tutorialModal = document.createElement('div');
+tutorialModal.style.position = 'fixed';
+tutorialModal.style.top = '0';
+tutorialModal.style.left = '0';
+tutorialModal.style.width = '100vw';
+tutorialModal.style.height = '100vh';
+tutorialModal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+tutorialModal.style.display = 'none';
+tutorialModal.style.zIndex = '200';
+tutorialModal.style.alignItems = 'center';
+tutorialModal.style.justifyContent = 'center';
+tutorialModal.style.animation = 'fadeIn 0.3s ease-in-out';
+
+// 모달 내용
+const tutorialContent = document.createElement('div');
+tutorialContent.style.background = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
+tutorialContent.style.borderRadius = '20px';
+tutorialContent.style.padding = '2rem';
+tutorialContent.style.maxWidth = '600px';
+tutorialContent.style.width = '90%';
+tutorialContent.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5)';
+tutorialContent.style.border = '2px solid rgba(255, 255, 255, 0.1)';
+tutorialContent.style.backdropFilter = 'blur(10px)';
+tutorialContent.style.animation = 'slideUp 0.4s ease-out';
+
+// 튜토리얼 HTML 내용
+tutorialContent.innerHTML = `
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="color: #fff; font-size: 2.5rem; margin: 0; text-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+            🎮 게임 조작법
+        </h2>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- 이동 조작 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #4FC3F7; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                🚶‍♂️ 이동
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8;">
+                <div style="display: flex; justify-content: center; margin: 1rem 0;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 120px;">
+                        <div></div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">W</div>
+                        <div></div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">A</div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">S</div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">D</div>
+                    </div>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem; opacity: 0.9;">
+                    W: 앞으로<br>
+                    S: 뒤로<br>
+                    A: 왼쪽<br>
+                    D: 오른쪽
+                </div>
+            </div>
+        </div>
+
+        <!-- 달리기 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #FF9800; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                🏃‍♂️ 달리기
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
+                <div style="background: #FF6B35; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
+                    SHIFT
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    Shift 키를 누르고 있으면<br>
+                    빠르게 달릴 수 있어요!<br>
+                    <span style="color: #FFB74D;">⚡ 스태미나 소모 주의</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시점 조작 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #E91E63; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                👁️ 시점 조작
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
+                <div style="background: #8E24AA; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
+                    마우스
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    마우스를 움직여서<br>
+                    화면 시점을 조작할 수 있어요<br>
+                    <span style="color: #F48FB1;">🖱️ 좌우상하 자유롭게!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 커서 조작 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #00BCD4; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                🖱️ 커서 조작
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
+                <div style="background: #00ACC1; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
+                    ESC
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    ESC 키로 커서 보이기/숨기기<br>
+                    화면 클릭으로 다시 시점 조작<br>
+                    <span style="color: #4DD0E1;">🔄 자유롭게 전환!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 목표 -->
+    <div style="background: rgba(255,0,0,0.1); padding: 1.5rem; border-radius: 15px; border: 2px solid rgba(255,0,0,0.3); margin-bottom: 2rem;">
+        <h3 style="color: #FF5722; margin-top: 0; font-size: 1.4rem; text-align: center;">
+            🎯 게임 목표
+        </h3>
+        <div style="color: #fff; font-size: 1.1rem; line-height: 1.6; text-align: center;">
+            <p style="margin: 0.5rem 0;">미로에서 <span style="color: #4CAF50; font-weight: bold;">출구</span>를 찾아 탈출하세요!</p>
+            <p style="margin: 0.5rem 0;">적에게 잡히면 <span style="color: #F44336; font-weight: bold;">게임오버</span>입니다.</p>
+            <p style="margin: 0.5rem 0; color: #FFB74D;">⚠️ 적이 가까이 올수록 화면이 빨갛게 변해요!</p>
+        </div>
+    </div>
+
+    <!-- 닫기 버튼 -->
+    <div style="text-align: center;">
+        <button id="closeTutorial" style="
+            background: linear-gradient(45deg, #4CAF50, #45A049);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s ease;
+            font-weight: bold;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            ✅ 이해했어요!
+        </button>
+    </div>
+`;
+
+tutorialModal.appendChild(tutorialContent);
+document.body.appendChild(tutorialModal);
+
+// CSS 애니메이션 추가
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { 
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        to { 
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+`;
+document.head.appendChild(style);
+
+// 튜토리얼 모달 표시 함수
+function showTutorial() {
+    tutorialModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// 튜토리얼 모달 숨기기 함수
+function hideTutorial() {
+    tutorialModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// 닫기 버튼 이벤트
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeTutorial');
+    if (closeBtn) {
+        closeBtn.onclick = hideTutorial;
+    }
+});
+
+// 모달 외부 클릭시 닫기
+tutorialModal.onclick = (e) => {
+    if (e.target === tutorialModal) {
+        hideTutorial();
+    }
+};
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && tutorialModal.style.display === 'flex') {
+        hideTutorial();
+    }
+});
+
 document.body.appendChild(menuDiv);
 
 // 게임 상태 UI
