@@ -100,31 +100,143 @@ menuDiv.style.left = '50%';
 menuDiv.style.transform = 'translate(-50%, -50%)';
 menuDiv.style.textAlign = 'center';
 menuDiv.style.zIndex = '100';
+menuDiv.style.background = `
+    linear-gradient(135deg, 
+        rgba(20, 20, 50, 0.95) 0%, 
+        rgba(50, 20, 20, 0.90) 50%, 
+        rgba(20, 20, 40, 0.95) 100%)
+`;
+menuDiv.style.backdropFilter = 'blur(15px)';
+menuDiv.style.border = '2px solid rgba(139, 69, 19, 0.6)';
+menuDiv.style.borderRadius = '25px';
+menuDiv.style.padding = '3rem 2.5rem';
+menuDiv.style.boxShadow = `
+    0 0 50px rgba(255, 0, 0, 0.3),
+    inset 0 0 30px rgba(139, 69, 19, 0.2),
+    0 20px 40px rgba(0, 0, 0, 0.5)
+`;
+menuDiv.style.animation = 'menuGlow 3s ease-in-out infinite alternate';
+menuDiv.style.minWidth = '450px';
+
+// 배경 효과 추가
+const backgroundOverlay = document.createElement('div');
+backgroundOverlay.style.position = 'fixed';
+backgroundOverlay.style.top = '0';
+backgroundOverlay.style.left = '0';
+backgroundOverlay.style.width = '100vw';
+backgroundOverlay.style.height = '100vh';
+backgroundOverlay.style.background = `
+    radial-gradient(circle at 20% 30%, rgba(139, 69, 19, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 0, 0, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(20, 20, 40, 0.9) 0%, rgba(60, 20, 20, 0.8) 100%)
+`;
+backgroundOverlay.style.zIndex = '50';
+backgroundOverlay.style.pointerEvents = 'none';
+
+// 애니메이션 파티클 효과
+const particleContainer = document.createElement('div');
+particleContainer.style.position = 'fixed';
+particleContainer.style.top = '0';
+particleContainer.style.left = '0';
+particleContainer.style.width = '100vw';
+particleContainer.style.height = '100vh';
+particleContainer.style.zIndex = '51';
+particleContainer.style.pointerEvents = 'none';
+particleContainer.style.overflow = 'hidden';
+
+// 파티클 생성
+for (let i = 0; i < 50; i++) {
+    const particle = document.createElement('div');
+    particle.style.position = 'absolute';
+    particle.style.width = Math.random() * 4 + 1 + 'px';
+    particle.style.height = particle.style.width;
+    particle.style.background = `rgba(${Math.random() > 0.5 ? '255, 100, 100' : '200, 200, 255'}, ${
+        Math.random() * 0.5 + 0.2
+    })`;
+    particle.style.borderRadius = '50%';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.top = Math.random() * 100 + '%';
+    particle.style.animation = `float${i % 3} ${3 + Math.random() * 4}s ease-in-out infinite`;
+    particleContainer.appendChild(particle);
+}
+
+document.body.appendChild(backgroundOverlay);
+document.body.appendChild(particleContainer);
 
 const titleDiv = document.createElement('div');
 titleDiv.textContent = 'SAHUR MAZE RUNNER';
-titleDiv.style.fontSize = '4rem';
-titleDiv.style.fontWeight = 'bold';
+titleDiv.style.fontSize = '3.5rem';
+titleDiv.style.fontWeight = '900';
+titleDiv.style.fontFamily = '"Orbitron", "Arial Black", sans-serif';
 titleDiv.style.color = '#fff';
-titleDiv.style.textShadow = '0 0 10px #222, 0 0 20px #222';
-titleDiv.style.marginBottom = '2rem';
+titleDiv.style.textShadow = `
+    0 0 20px rgba(255, 50, 50, 0.8),
+    0 0 40px rgba(255, 100, 100, 0.4),
+    2px 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 60px rgba(139, 69, 19, 0.6)
+`;
+titleDiv.style.marginBottom = '2.5rem';
+titleDiv.style.letterSpacing = '3px';
+titleDiv.style.animation = 'titlePulse 2s ease-in-out infinite alternate';
 menuDiv.appendChild(titleDiv);
+
+// 서브타이틀 추가
+const subtitleDiv = document.createElement('div');
+subtitleDiv.textContent = '🏃‍♂️ ESCAPE THE NIGHTMARE 😈';
+subtitleDiv.style.fontSize = '1.2rem';
+subtitleDiv.style.color = 'rgba(255, 200, 200, 0.9)';
+subtitleDiv.style.marginBottom = '2rem';
+subtitleDiv.style.fontFamily = '"Roboto", sans-serif';
+subtitleDiv.style.textShadow = '0 2px 10px rgba(255, 0, 0, 0.5)';
+subtitleDiv.style.animation = 'subtitleFloat 2.5s ease-in-out infinite alternate';
+menuDiv.appendChild(subtitleDiv);
 
 // 시점 선택 UI
 const viewModeDiv = document.createElement('div');
 viewModeDiv.style.marginBottom = '2rem';
+viewModeDiv.style.background = 'rgba(0, 0, 0, 0.3)';
+viewModeDiv.style.padding = '1rem';
+viewModeDiv.style.borderRadius = '15px';
+viewModeDiv.style.border = '1px solid rgba(139, 69, 19, 0.4)';
+
+const viewModeLabel = document.createElement('div');
+viewModeLabel.textContent = '👁️ 시점 선택';
+viewModeLabel.style.color = '#FFD700';
+viewModeLabel.style.fontSize = '1.1rem';
+viewModeLabel.style.marginBottom = '0.8rem';
+viewModeLabel.style.fontWeight = 'bold';
+viewModeLabel.style.textShadow = '0 2px 8px rgba(255, 215, 0, 0.5)';
+viewModeDiv.appendChild(viewModeLabel);
+
 const viewModes = ['first', 'third'];
 viewModes.forEach((mode) => {
     const btn = document.createElement('button');
     btn.textContent = mode === 'first' ? '1인칭 시점' : '3인칭 시점';
-    btn.style.fontSize = '1.5rem';
-    btn.style.margin = '0.5rem';
-    btn.style.padding = '0.5em 1.5em';
-    btn.style.borderRadius = '1em';
-    btn.style.border = 'none';
-    btn.style.background = '#222';
+    btn.style.fontSize = '1.1rem';
+    btn.style.margin = '0.3rem';
+    btn.style.padding = '0.8em 1.8em';
+    btn.style.borderRadius = '25px';
+    btn.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+    btn.style.background = 'linear-gradient(135deg, rgba(70, 70, 100, 0.8), rgba(50, 50, 80, 0.9))';
     btn.style.color = '#fff';
     btn.style.cursor = 'pointer';
+    btn.style.transition = 'all 0.3s ease';
+    btn.style.fontFamily = '"Roboto", sans-serif';
+    btn.style.fontWeight = '600';
+    btn.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.5)';
+    btn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+
+    btn.onmouseover = () => {
+        btn.style.transform = 'translateY(-2px) scale(1.05)';
+        btn.style.boxShadow = '0 8px 25px rgba(100, 100, 200, 0.4)';
+        btn.style.border = '2px solid rgba(100, 150, 255, 0.6)';
+    };
+    btn.onmouseout = () => {
+        btn.style.transform = 'translateY(0) scale(1)';
+        btn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+        btn.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+    };
+
     btn.onclick = () => {
         viewMode = mode;
         updateViewModeButtons();
@@ -136,19 +248,65 @@ menuDiv.appendChild(viewModeDiv);
 // 난이도 선택 UI
 const difficultyDiv = document.createElement('div');
 difficultyDiv.style.marginBottom = '2rem';
+difficultyDiv.style.background = 'rgba(0, 0, 0, 0.3)';
+difficultyDiv.style.padding = '1.2rem';
+difficultyDiv.style.borderRadius = '15px';
+difficultyDiv.style.border = '1px solid rgba(139, 69, 19, 0.4)';
+
+const difficultyLabel = document.createElement('div');
+difficultyLabel.textContent = '⚔️ 난이도 선택';
+difficultyLabel.style.color = '#FF6B35';
+difficultyLabel.style.fontSize = '1.2rem';
+difficultyLabel.style.marginBottom = '1rem';
+difficultyLabel.style.fontWeight = 'bold';
+difficultyLabel.style.textShadow = '0 2px 8px rgba(255, 107, 53, 0.5)';
+difficultyDiv.appendChild(difficultyLabel);
 
 const difficulties = ['easy', 'medium', 'hard'];
 difficulties.forEach((diff) => {
     const btn = document.createElement('button');
     btn.textContent = diff.toUpperCase();
-    btn.style.fontSize = '2rem';
-    btn.style.margin = '0.5rem';
-    btn.style.padding = '0.5em 1.5em';
-    btn.style.borderRadius = '1em';
-    btn.style.border = 'none';
-    btn.style.background = '#222';
+    const colors = {
+        easy: {
+            bg: 'linear-gradient(135deg, rgba(76, 175, 80, 0.8), rgba(56, 142, 60, 0.9))',
+            hover: 'rgba(76, 175, 80, 0.4)',
+        },
+        medium: {
+            bg: 'linear-gradient(135deg, rgba(255, 152, 0, 0.8), rgba(245, 124, 0, 0.9))',
+            hover: 'rgba(255, 152, 0, 0.4)',
+        },
+        hard: {
+            bg: 'linear-gradient(135deg, rgba(244, 67, 54, 0.8), rgba(211, 47, 47, 0.9))',
+            hover: 'rgba(244, 67, 54, 0.4)',
+        },
+    };
+
+    btn.style.fontSize = '1.5rem';
+    btn.style.margin = '0.4rem';
+    btn.style.padding = '0.8em 2em';
+    btn.style.borderRadius = '30px';
+    btn.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+    btn.style.background = colors[diff].bg;
     btn.style.color = '#fff';
     btn.style.cursor = 'pointer';
+    btn.style.transition = 'all 0.3s ease';
+    btn.style.fontFamily = '"Orbitron", sans-serif';
+    btn.style.fontWeight = '700';
+    btn.style.textShadow = '0 2px 6px rgba(0, 0, 0, 0.7)';
+    btn.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+    btn.style.letterSpacing = '1px';
+
+    btn.onmouseover = () => {
+        btn.style.transform = 'translateY(-3px) scale(1.08)';
+        btn.style.boxShadow = `0 12px 30px ${colors[diff].hover}`;
+        btn.style.filter = 'brightness(1.2)';
+    };
+    btn.onmouseout = () => {
+        btn.style.transform = 'translateY(0) scale(1)';
+        btn.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+        btn.style.filter = 'brightness(1)';
+    };
+
     btn.onclick = () => {
         difficulty = diff;
         updateDifficultyButtons();
@@ -160,234 +318,190 @@ menuDiv.appendChild(difficultyDiv);
 // 시작 버튼
 const startBtn = document.createElement('button');
 startBtn.textContent = '게임 시작';
-startBtn.style.fontSize = '2.5rem';
-startBtn.style.padding = '0.5em 1.5em';
-startBtn.style.borderRadius = '1em';
-startBtn.style.border = 'none';
-startBtn.style.background = '#4CAF50';
+startBtn.style.fontSize = '2.2rem';
+startBtn.style.padding = '1em 2.5em';
+startBtn.style.borderRadius = '50px';
+startBtn.style.border = '3px solid rgba(76, 175, 80, 0.6)';
+startBtn.style.background = `
+    linear-gradient(135deg, 
+        rgba(76, 175, 80, 0.9) 0%, 
+        rgba(56, 142, 60, 1) 50%, 
+        rgba(76, 175, 80, 0.9) 100%)
+`;
 startBtn.style.color = '#fff';
 startBtn.style.cursor = 'pointer';
+startBtn.style.fontFamily = '"Orbitron", sans-serif';
+startBtn.style.fontWeight = '800';
+startBtn.style.textShadow = '0 3px 8px rgba(0, 0, 0, 0.8)';
+startBtn.style.boxShadow = `
+    0 8px 25px rgba(76, 175, 80, 0.4),
+    inset 0 2px 10px rgba(255, 255, 255, 0.2)
+`;
+startBtn.style.letterSpacing = '2px';
+startBtn.style.transition = 'all 0.4s ease';
+startBtn.style.animation = 'startButtonPulse 2s ease-in-out infinite';
+startBtn.style.marginTop = '1rem';
+
+startBtn.onmouseover = () => {
+    startBtn.style.transform = 'translateY(-4px) scale(1.1)';
+    startBtn.style.boxShadow = `
+        0 15px 40px rgba(76, 175, 80, 0.6),
+        inset 0 2px 15px rgba(255, 255, 255, 0.3)
+    `;
+    startBtn.style.filter = 'brightness(1.2)';
+};
+startBtn.onmouseout = () => {
+    startBtn.style.transform = 'translateY(0) scale(1)';
+    startBtn.style.boxShadow = `
+        0 8px 25px rgba(76, 175, 80, 0.4),
+        inset 0 2px 10px rgba(255, 255, 255, 0.2)
+    `;
+    startBtn.style.filter = 'brightness(1)';
+};
 startBtn.onclick = startGame;
 menuDiv.appendChild(startBtn);
 
+// 튜토리얼 버튼
 const tutorialBtn = document.createElement('button');
 tutorialBtn.textContent = '조작법 보기';
-tutorialBtn.style.fontSize = '2rem';
-tutorialBtn.style.padding = '0.5em 1.5em';
-tutorialBtn.style.borderRadius = '1em';
-tutorialBtn.style.border = 'none';
-tutorialBtn.style.background = '#2196F3';
+tutorialBtn.style.fontSize = '1.6rem';
+tutorialBtn.style.padding = '0.8em 2em';
+tutorialBtn.style.borderRadius = '40px';
+tutorialBtn.style.border = '2px solid rgba(33, 150, 243, 0.5)';
+tutorialBtn.style.background = `
+    linear-gradient(135deg, 
+        rgba(33, 150, 243, 0.8) 0%, 
+        rgba(21, 101, 192, 0.9) 100%)
+`;
 tutorialBtn.style.color = '#fff';
 tutorialBtn.style.cursor = 'pointer';
-tutorialBtn.style.marginTop = '1rem';
+tutorialBtn.style.fontFamily = '"Roboto", sans-serif';
+tutorialBtn.style.fontWeight = '600';
+tutorialBtn.style.textShadow = '0 2px 6px rgba(0, 0, 0, 0.6)';
+tutorialBtn.style.boxShadow = '0 6px 20px rgba(33, 150, 243, 0.3)';
+tutorialBtn.style.transition = 'all 0.3s ease';
+tutorialBtn.style.marginTop = '1.5rem';
+tutorialBtn.style.display = 'block';
+tutorialBtn.style.width = '100%';
+
+tutorialBtn.onmouseover = () => {
+    tutorialBtn.style.transform = 'translateY(-2px) scale(1.05)';
+    tutorialBtn.style.boxShadow = '0 10px 30px rgba(33, 150, 243, 0.5)';
+};
+tutorialBtn.onmouseout = () => {
+    tutorialBtn.style.transform = 'translateY(0) scale(1)';
+    tutorialBtn.style.boxShadow = '0 6px 20px rgba(33, 150, 243, 0.3)';
+};
 tutorialBtn.onclick = showTutorial;
 menuDiv.appendChild(tutorialBtn);
 
-// 튜토리얼 모달 생성
-const tutorialModal = document.createElement('div');
-tutorialModal.style.position = 'fixed';
-tutorialModal.style.top = '0';
-tutorialModal.style.left = '0';
-tutorialModal.style.width = '100vw';
-tutorialModal.style.height = '100vh';
-tutorialModal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-tutorialModal.style.display = 'none';
-tutorialModal.style.zIndex = '200';
-tutorialModal.style.alignItems = 'center';
-tutorialModal.style.justifyContent = 'center';
-tutorialModal.style.animation = 'fadeIn 0.3s ease-in-out';
-
-// 모달 내용
-const tutorialContent = document.createElement('div');
-tutorialContent.style.background = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
-tutorialContent.style.borderRadius = '20px';
-tutorialContent.style.padding = '2rem';
-tutorialContent.style.maxWidth = '600px';
-tutorialContent.style.width = '90%';
-tutorialContent.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5)';
-tutorialContent.style.border = '2px solid rgba(255, 255, 255, 0.1)';
-tutorialContent.style.backdropFilter = 'blur(10px)';
-tutorialContent.style.animation = 'slideUp 0.4s ease-out';
-
-// 튜토리얼 HTML 내용
-tutorialContent.innerHTML = `
-    <div style="text-align: center; margin-bottom: 2rem;">
-        <h2 style="color: #fff; font-size: 2.5rem; margin: 0; text-shadow: 0 4px 8px rgba(0,0,0,0.5);">
-            🎮 게임 조작법
-        </h2>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-        <!-- 이동 조작 -->
-        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
-            <h3 style="color: #4FC3F7; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
-                🚶‍♂️ 이동
-            </h3>
-            <div style="color: #fff; font-size: 1rem; line-height: 1.8;">
-                <div style="display: flex; justify-content: center; margin: 1rem 0;">
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 120px;">
-                        <div></div>
-                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">W</div>
-                        <div></div>
-                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">A</div>
-                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">S</div>
-                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">D</div>
-                    </div>
-                </div>
-                <div style="text-align: center; font-size: 0.9rem; opacity: 0.9;">
-                    W: 앞으로<br>
-                    S: 뒤로<br>
-                    A: 왼쪽<br>
-                    D: 오른쪽
-                </div>
-            </div>
-        </div>
-
-        <!-- 달리기 -->
-        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
-            <h3 style="color: #FF9800; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
-                🏃‍♂️ 달리기
-            </h3>
-            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
-                <div style="background: #FF6B35; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
-                    SHIFT
-                </div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">
-                    Shift 키를 누르고 있으면<br>
-                    빠르게 달릴 수 있어요!<br>
-                    <span style="color: #FFB74D;">⚡ 스태미나 소모 주의</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 시점 조작 -->
-        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
-            <h3 style="color: #E91E63; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
-                👁️ 시점 조작
-            </h3>
-            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
-                <div style="background: #8E24AA; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
-                    마우스
-                </div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">
-                    마우스를 움직여서<br>
-                    화면 시점을 조작할 수 있어요<br>
-                    <span style="color: #F48FB1;">🖱️ 좌우상하 자유롭게!</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 커서 조작 -->
-        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
-            <h3 style="color: #00BCD4; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
-                🖱️ 커서 조작
-            </h3>
-            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
-                <div style="background: #00ACC1; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
-                    ESC
-                </div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">
-                    ESC 키로 커서 보이기/숨기기<br>
-                    화면 클릭으로 다시 시점 조작<br>
-                    <span style="color: #4DD0E1;">🔄 자유롭게 전환!</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 게임 목표 -->
-    <div style="background: rgba(255,0,0,0.1); padding: 1.5rem; border-radius: 15px; border: 2px solid rgba(255,0,0,0.3); margin-bottom: 2rem;">
-        <h3 style="color: #FF5722; margin-top: 0; font-size: 1.4rem; text-align: center;">
-            🎯 게임 목표
-        </h3>
-        <div style="color: #fff; font-size: 1.1rem; line-height: 1.6; text-align: center;">
-            <p style="margin: 0.5rem 0;">미로에서 <span style="color: #4CAF50; font-weight: bold;">출구</span>를 찾아 탈출하세요!</p>
-            <p style="margin: 0.5rem 0;">적에게 잡히면 <span style="color: #F44336; font-weight: bold;">게임오버</span>입니다.</p>
-            <p style="margin: 0.5rem 0; color: #FFB74D;">⚠️ 적이 가까이 올수록 화면이 빨갛게 변해요!</p>
-        </div>
-    </div>
-
-    <!-- 닫기 버튼 -->
-    <div style="text-align: center;">
-        <button id="closeTutorial" style="
-            background: linear-gradient(45deg, #4CAF50, #45A049);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-            transition: all 0.3s ease;
-            font-weight: bold;
-        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            ✅ 이해했어요!
-        </button>
-    </div>
-`;
-
-tutorialModal.appendChild(tutorialContent);
-document.body.appendChild(tutorialModal);
-
 // CSS 애니메이션 추가
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+const menuAnimations = document.createElement('style');
+menuAnimations.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@400;500;600;700&display=swap');
+    
+    @keyframes menuGlow {
+        0% { box-shadow: 0 0 50px rgba(255, 0, 0, 0.2), inset 0 0 30px rgba(139, 69, 19, 0.1), 0 20px 40px rgba(0, 0, 0, 0.5); }
+        100% { box-shadow: 0 0 50px rgba(255, 0, 0, 0.4), inset 0 0 30px rgba(139, 69, 19, 0.3), 0 20px 40px rgba(0, 0, 0, 0.5); }
     }
     
-    @keyframes slideUp {
-        from { 
-            opacity: 0;
-            transform: translateY(30px) scale(0.95);
+    @keyframes titlePulse {
+        0% { 
+            text-shadow: 0 0 20px rgba(255, 50, 50, 0.6), 0 0 40px rgba(255, 100, 100, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 60px rgba(139, 69, 19, 0.4);
+            transform: scale(1);
         }
-        to { 
-            opacity: 1;
-            transform: translateY(0) scale(1);
+        100% { 
+            text-shadow: 0 0 20px rgba(255, 50, 50, 1), 0 0 40px rgba(255, 100, 100, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 60px rgba(139, 69, 19, 0.8);
+            transform: scale(1.02);
         }
     }
     
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
+    @keyframes subtitleFloat {
+        0% { opacity: 0.7; transform: translateY(0); }
+        100% { opacity: 1; transform: translateY(-3px); }
+    }
+    
+    @keyframes startButtonPulse {
+        0%, 100% { 
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3), inset 0 2px 10px rgba(255, 255, 255, 0.2);
+            transform: scale(1);
+        }
+        50% { 
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5), inset 0 2px 10px rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+    }
+    
+    @keyframes float0 {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        33% { transform: translateY(-10px) rotate(120deg); }
+        66% { transform: translateY(5px) rotate(240deg); }
+    }
+    
+    @keyframes float1 {
+        0%, 100% { transform: translateX(0) scale(1); }
+        50% { transform: translateX(10px) scale(1.1); }
+    }
+    
+    @keyframes float2 {
+        0%, 100% { transform: translateY(0) translateX(0); }
+        25% { transform: translateY(-8px) translateX(5px); }
+        75% { transform: translateY(8px) translateX(-5px); }
+    }
+    
+    body {
+        font-family: 'Roboto', sans-serif;
+        overflow: hidden;
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(menuAnimations);
 
-// 튜토리얼 모달 표시 함수
-function showTutorial() {
-    tutorialModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
+// 로딩 스크린 효과
+const loadingScreen = document.createElement('div');
+loadingScreen.style.position = 'fixed';
+loadingScreen.style.top = '0';
+loadingScreen.style.left = '0';
+loadingScreen.style.width = '100vw';
+loadingScreen.style.height = '100vh';
+loadingScreen.style.background = 'linear-gradient(135deg, #000000 0%, #1a0000 50%, #000000 100%)';
+loadingScreen.style.zIndex = '1000';
+loadingScreen.style.display = 'flex';
+loadingScreen.style.alignItems = 'center';
+loadingScreen.style.justifyContent = 'center';
+loadingScreen.style.flexDirection = 'column';
 
-// 튜토리얼 모달 숨기기 함수
-function hideTutorial() {
-    tutorialModal.style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
+loadingScreen.innerHTML = `
+    <div style="color: #fff; font-size: 3rem; font-family: 'Orbitron', sans-serif; font-weight: 900; margin-bottom: 2rem; text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);">
+        SAHUR MAZE RUNNER
+    </div>
+    <div style="color: rgba(255, 255, 255, 0.7); font-size: 1.2rem; margin-bottom: 3rem;">
+        Loading nightmare...
+    </div>
+    <div style="width: 300px; height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; overflow: hidden;">
+        <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff3333, #ff6666); border-radius: 2px; animation: loadingBar 3s ease-out forwards;"></div>
+    </div>
+`;
 
-// 닫기 버튼 이벤트
-document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById('closeTutorial');
-    if (closeBtn) {
-        closeBtn.onclick = hideTutorial;
+// 로딩 바 애니메이션
+const loadingAnimation = document.createElement('style');
+loadingAnimation.textContent = `
+    @keyframes loadingBar {
+        0% { width: 0%; }
+        100% { width: 100%; }
     }
-});
+`;
+document.head.appendChild(loadingAnimation);
 
-// 모달 외부 클릭시 닫기
-tutorialModal.onclick = (e) => {
-    if (e.target === tutorialModal) {
-        hideTutorial();
-    }
-};
+document.body.appendChild(loadingScreen);
 
-// ESC 키로 모달 닫기
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && tutorialModal.style.display === 'flex') {
-        hideTutorial();
-    }
-});
+// 3초 후 로딩 스크린 제거
+setTimeout(() => {
+    loadingScreen.style.opacity = '0';
+    loadingScreen.style.transition = 'opacity 0.5s ease-out';
+    setTimeout(() => {
+        loadingScreen.remove();
+    }, 500);
+}, 3000);
 
 document.body.appendChild(menuDiv);
 
@@ -1468,3 +1582,183 @@ function onMouseMove(e) {
         cameraElevation = Math.max(minElev, Math.min(maxElev, cameraElevation));
     }
 }
+
+// 튜토리얼 모달 생성
+const tutorialModal = document.createElement('div');
+tutorialModal.style.position = 'fixed';
+tutorialModal.style.top = '0';
+tutorialModal.style.left = '0';
+tutorialModal.style.width = '100vw';
+tutorialModal.style.height = '100vh';
+tutorialModal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+tutorialModal.style.display = 'none';
+tutorialModal.style.zIndex = '200';
+tutorialModal.style.alignItems = 'center';
+tutorialModal.style.justifyContent = 'center';
+tutorialModal.style.animation = 'fadeIn 0.3s ease-in-out';
+
+// 모달 내용
+const tutorialContent = document.createElement('div');
+tutorialContent.style.background = 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)';
+tutorialContent.style.borderRadius = '20px';
+tutorialContent.style.padding = '2rem';
+tutorialContent.style.maxWidth = '600px';
+tutorialContent.style.width = '90%';
+tutorialContent.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5)';
+tutorialContent.style.border = '2px solid rgba(255, 255, 255, 0.1)';
+tutorialContent.style.backdropFilter = 'blur(10px)';
+tutorialContent.style.animation = 'slideUp 0.4s ease-out';
+
+// 튜토리얼 HTML 내용
+tutorialContent.innerHTML = `
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="color: #fff; font-size: 2.5rem; margin: 0; text-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+            🎮 게임 조작법
+        </h2>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- 이동 조작 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #4FC3F7; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                🚶‍♂️ 이동
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8;">
+                <div style="display: flex; justify-content: center; margin: 1rem 0;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 120px;">
+                        <div></div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">W</div>
+                        <div></div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">A</div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">S</div>
+                        <div style="background: #4CAF50; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold;">D</div>
+                    </div>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem; opacity: 0.9;">
+                    W: 앞으로<br>
+                    S: 뒤로<br>
+                    A: 왼쪽<br>
+                    D: 오른쪽
+                </div>
+            </div>
+        </div>
+
+        <!-- 달리기 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #FF9800; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                🏃‍♂️ 달리기
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
+                <div style="background: #FF6B35; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
+                    SHIFT
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    Shift 키를 누르고 있으면<br>
+                    빠르게 달릴 수 있어요!<br>
+                    <span style="color: #FFB74D;">⚡ 스태미나 소모 주의</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시점 조작 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #E91E63; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                👁️ 시점 조작
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
+                <div style="background: #8E24AA; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
+                    마우스
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    마우스를 움직여서<br>
+                    화면 시점을 조작할 수 있어요<br>
+                    <span style="color: #F48FB1;">🖱️ 좌우상하 자유롭게!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 커서 조작 -->
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 15px; backdrop-filter: blur(5px);">
+            <h3 style="color: #00BCD4; margin-top: 0; font-size: 1.3rem; display: flex; align-items: center;">
+                🖱️ 커서 조작
+            </h3>
+            <div style="color: #fff; font-size: 1rem; line-height: 1.8; text-align: center;">
+                <div style="background: #00ACC1; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 1rem 0; display: inline-block;">
+                    ESC
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    ESC 키로 커서 보이기/숨기기<br>
+                    화면 클릭으로 다시 시점 조작<br>
+                    <span style="color: #4DD0E1;">🔄 자유롭게 전환!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 목표 -->
+    <div style="background: rgba(255,0,0,0.1); padding: 1.5rem; border-radius: 15px; border: 2px solid rgba(255,0,0,0.3); margin-bottom: 2rem;">
+        <h3 style="color: #FF5722; margin-top: 0; font-size: 1.4rem; text-align: center;">
+            🎯 게임 목표
+        </h3>
+        <div style="color: #fff; font-size: 1.1rem; line-height: 1.6; text-align: center;">
+            <p style="margin: 0.5rem 0;">미로에서 <span style="color: #4CAF50; font-weight: bold;">출구</span>를 찾아 탈출하세요!</p>
+            <p style="margin: 0.5rem 0;">적에게 잡히면 <span style="color: #F44336; font-weight: bold;">게임오버</span>입니다.</p>
+            <p style="margin: 0.5rem 0; color: #FFB74D;">⚠️ 적이 가까이 올수록 화면이 빨갛게 변해요!</p>
+        </div>
+    </div>
+
+    <!-- 닫기 버튼 -->
+    <div style="text-align: center;">
+        <button id="closeTutorial" style="
+            background: linear-gradient(45deg, #4CAF50, #45A049);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s ease;
+            font-weight: bold;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            ✅ 이해했어요!
+        </button>
+    </div>
+`;
+
+tutorialModal.appendChild(tutorialContent);
+document.body.appendChild(tutorialModal);
+
+// 튜토리얼 모달 표시 함수
+function showTutorial() {
+    tutorialModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// 튜토리얼 모달 숨기기 함수
+function hideTutorial() {
+    tutorialModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// 닫기 버튼 이벤트
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeTutorial');
+    if (closeBtn) {
+        closeBtn.onclick = hideTutorial;
+    }
+});
+
+// 모달 외부 클릭시 닫기
+tutorialModal.onclick = (e) => {
+    if (e.target === tutorialModal) {
+        hideTutorial();
+    }
+};
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && tutorialModal.style.display === 'flex') {
+        hideTutorial();
+    }
+});
