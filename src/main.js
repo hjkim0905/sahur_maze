@@ -88,6 +88,145 @@ dangerLight.position.set(0, 10, 0);
 dangerLight.castShadow = false; // 그림자 비활성화로 성능 향상
 scene.add(dangerLight);
 
+// 배경 음악 시스템
+let menuBGM, gameBGM, dangerBGM;
+let currentBGM = null;
+
+// 오디오 컨텍스트 초기화
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// 오디오 로드 함수
+function loadAudio(url) {
+    return fetch(url)
+        .then((response) => response.arrayBuffer())
+        .then((arrayBuffer) => audioContext.decodeAudioData(arrayBuffer));
+}
+
+// 오디오 재생 함수
+function playAudio(audioBuffer, volume = 0.5) {
+    if (currentBGM) {
+        currentBGM.stop();
+    }
+
+    const source = audioContext.createBufferSource();
+    const gainNode = audioContext.createGain();
+
+    source.buffer = audioBuffer;
+    source.loop = true;
+
+    gainNode.gain.value = volume;
+
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    source.start(0);
+    currentBGM = source;
+
+    return { source, gainNode };
+}
+
+// 페이드 효과 함수
+function fadeOut(audio, duration = 1.0) {
+    if (!audio) return;
+
+    const startTime = audioContext.currentTime;
+    const startVolume = audio.gainNode.gain.value;
+
+    audio.gainNode.gain.setValueAtTime(startVolume, startTime);
+    audio.gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+
+    setTimeout(() => {
+        if (audio.source) {
+            audio.source.stop();
+        }
+    }, duration * 1000);
+}
+
+function fadeIn(audio, targetVolume = 0.5, duration = 1.0) {
+    if (!audio) return;
+
+    const startTime = audioContext.currentTime;
+    const startVolume = audio.gainNode.gain.value;
+
+    audio.gainNode.gain.setValueAtTime(startVolume, startTime);
+    audio.gainNode.gain.linearRampToValueAtTime(targetVolume, startTime + duration);
+}
+
+// 오디오 로드 및 초기화
+let menuAudio, gameAudio, dangerAudio;
+
+// 모든 오디오 로드
+Promise.all([loadAudio('/audio/menu_bgm.mp3'), loadAudio('/audio/game_bgm.mp3'), loadAudio('/audio/danger_bgm.mp3')])
+    .then(([menu, game, danger]) => {
+        menuAudio = menu;
+        gameAudio = game;
+        dangerAudio = danger;
+
+        // 메뉴 음악 자동 시작
+        menuBGM = playAudio(menuAudio, 0.5);
+    })
+    .catch((error) => {
+        console.error('오디오 로드 실패:', error);
+    });
+
+// 게임 시작 시 음악 전환
+function startGameMusic() {
+    if (menuBGM) {
+        fadeOut(menuBGM, 1.0);
+    }
+    setTimeout(() => {
+        gameBGM = playAudio(gameAudio, 0.5);
+    }, 1000);
+}
+
+// 🔥 기존 updateDangerMusic 함수를 이것으로 완전히 교체하세요
+function updateDangerMusic(intensity) {
+    if (intensity > 0.1) {
+        // 위험 상황: 위험 음악 재생, 게임 음악 중단
+        if (!dangerBGM) {
+            // 게임 음악 중단
+            if (gameBGM) {
+                fadeOut(gameBGM, 0.3);
+                gameBGM = null;
+            }
+            // 위험 음악 시작
+            dangerBGM = playAudio(dangerAudio, intensity * 0.5);
+        } else {
+            // 위험 음악 볼륨 조절
+            if (dangerBGM.gainNode) {
+                dangerBGM.gainNode.gain.setValueAtTime(intensity * 0.5, audioContext.currentTime);
+            }
+        }
+    } else {
+        // 안전 상황: 위험 음악 중단, 게임 음악 재생
+        if (dangerBGM) {
+            fadeOut(dangerBGM, 0.5);
+            dangerBGM = null;
+        }
+
+        // 게임 음악이 없으면 다시 시작
+        if (!gameBGM) {
+            setTimeout(() => {
+                gameBGM = playAudio(gameAudio, 0.5);
+            }, 500);
+        }
+    }
+}
+
+// 사용자 상호작용 시 오디오 초기화
+document.addEventListener(
+    'click',
+    () => {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        if (!menuBGM && menuAudio) {
+            menuBGM = playAudio(menuAudio, 0.5);
+        }
+    },
+    { once: true }
+);
+
 // 렌더러 DOM 요소 추가
 document.querySelector('#app').innerHTML = ''; // 기존 텍스트 제거
 document.querySelector('#app').appendChild(renderer.domElement);
@@ -239,7 +378,9 @@ viewModes.forEach((mode) => {
 
     btn.onclick = () => {
         viewMode = mode;
+        viewModeSelected = true;
         updateViewModeButtons();
+        checkAllSelections();
     };
     viewModeDiv.appendChild(btn);
 });
@@ -309,57 +450,97 @@ difficulties.forEach((diff) => {
 
     btn.onclick = () => {
         difficulty = diff;
+        difficultySelected = true;
         updateDifficultyButtons();
+        checkAllSelections();
     };
     difficultyDiv.appendChild(btn);
 });
 menuDiv.appendChild(difficultyDiv);
 
 // 시작 버튼
+// 시작 버튼
 const startBtn = document.createElement('button');
 startBtn.textContent = '게임 시작';
 startBtn.style.fontSize = '2.2rem';
 startBtn.style.padding = '1em 2.5em';
 startBtn.style.borderRadius = '50px';
-startBtn.style.border = '3px solid rgba(76, 175, 80, 0.6)';
+startBtn.style.border = '3px solid rgba(100, 100, 100, 0.6)';
 startBtn.style.background = `
     linear-gradient(135deg, 
-        rgba(76, 175, 80, 0.9) 0%, 
-        rgba(56, 142, 60, 1) 50%, 
-        rgba(76, 175, 80, 0.9) 100%)
+        rgba(100, 100, 100, 0.5) 0%, 
+        rgba(80, 80, 80, 0.7) 50%, 
+        rgba(100, 100, 100, 0.5) 100%)
 `;
-startBtn.style.color = '#fff';
-startBtn.style.cursor = 'pointer';
+startBtn.style.color = 'rgba(255, 255, 255, 0.5)';
+startBtn.style.cursor = 'not-allowed';
 startBtn.style.fontFamily = '"Orbitron", sans-serif';
 startBtn.style.fontWeight = '800';
 startBtn.style.textShadow = '0 3px 8px rgba(0, 0, 0, 0.8)';
 startBtn.style.boxShadow = `
-    0 8px 25px rgba(76, 175, 80, 0.4),
-    inset 0 2px 10px rgba(255, 255, 255, 0.2)
+    0 8px 25px rgba(100, 100, 100, 0.2),
+    inset 0 2px 10px rgba(255, 255, 255, 0.1)
 `;
 startBtn.style.letterSpacing = '2px';
 startBtn.style.transition = 'all 0.4s ease';
-startBtn.style.animation = 'startButtonPulse 2s ease-in-out infinite';
 startBtn.style.marginTop = '1rem';
-
-startBtn.onmouseover = () => {
-    startBtn.style.transform = 'translateY(-4px) scale(1.1)';
-    startBtn.style.boxShadow = `
-        0 15px 40px rgba(76, 175, 80, 0.6),
-        inset 0 2px 15px rgba(255, 255, 255, 0.3)
-    `;
-    startBtn.style.filter = 'brightness(1.2)';
-};
-startBtn.onmouseout = () => {
-    startBtn.style.transform = 'translateY(0) scale(1)';
-    startBtn.style.boxShadow = `
-        0 8px 25px rgba(76, 175, 80, 0.4),
-        inset 0 2px 10px rgba(255, 255, 255, 0.2)
-    `;
-    startBtn.style.filter = 'brightness(1)';
-};
-startBtn.onclick = startGame;
+startBtn.disabled = true;
+startBtn.onclick = null;
 menuDiv.appendChild(startBtn);
+let viewModeSelected = false;
+let difficultySelected = false;
+
+function checkAllSelections() {
+    if (viewModeSelected && difficultySelected) {
+        // 모든 선택 완료 - 버튼 활성화
+        startBtn.disabled = false;
+        startBtn.style.cursor = 'pointer';
+        startBtn.style.color = '#fff';
+        startBtn.style.border = '3px solid rgba(76, 175, 80, 0.6)';
+        startBtn.style.background = `
+            linear-gradient(135deg, 
+                rgba(76, 175, 80, 0.9) 0%, 
+                rgba(56, 142, 60, 1) 50%, 
+                rgba(76, 175, 80, 0.9) 100%)
+        `;
+        startBtn.style.boxShadow = `
+            0 8px 25px rgba(76, 175, 80, 0.4),
+            inset 0 2px 10px rgba(255, 255, 255, 0.2)
+        `;
+        startBtn.style.animation = 'startButtonPulse 2s ease-in-out infinite';
+
+        startBtn.onmouseover = () => {
+            startBtn.style.transform = 'translateY(-4px) scale(1.1)';
+            startBtn.style.boxShadow = `
+                0 15px 40px rgba(76, 175, 80, 0.6),
+                inset 0 2px 15px rgba(255, 255, 255, 0.3)
+            `;
+            startBtn.style.filter = 'brightness(1.2)';
+        };
+        startBtn.onmouseout = () => {
+            startBtn.style.transform = 'translateY(0) scale(1)';
+            startBtn.style.boxShadow = `
+                0 8px 25px rgba(76, 175, 80, 0.4),
+                inset 0 2px 10px rgba(255, 255, 255, 0.2)
+            `;
+            startBtn.style.filter = 'brightness(1)';
+        };
+
+        startBtn.onclick = startGame;
+        startBtn.textContent = '✅ 게임 시작';
+    } else {
+        startBtn.disabled = true;
+        startBtn.style.cursor = 'not-allowed';
+        startBtn.onclick = null;
+        startBtn.onmouseover = null;
+        startBtn.onmouseout = null;
+
+        let missing = [];
+        if (!viewModeSelected) missing.push('시점');
+        if (!difficultySelected) missing.push('난이도');
+        startBtn.textContent = `${missing.join(', ')} 선택 필요`;
+    }
+}
 
 // 튜토리얼 버튼
 const tutorialBtn = document.createElement('button');
@@ -504,6 +685,7 @@ setTimeout(() => {
 }, 3000);
 
 document.body.appendChild(menuDiv);
+checkAllSelections();
 
 // 게임 상태 UI
 const uiDiv = document.createElement('div');
@@ -930,6 +1112,9 @@ function updateDangerMode(playerPos, enemyPos) {
 
         // 부드럽게 강도 조절
         dangerIntensity += (targetIntensity - dangerIntensity) * 0.08; // 더 천천히 변화
+
+        // 위험 음악 업데이트
+        updateDangerMusic(dangerIntensity);
     } else {
         // 위험 모드 비활성화
         if (dangerMode && distance > dangerDistance + 3) {
@@ -939,9 +1124,12 @@ function updateDangerMode(playerPos, enemyPos) {
 
         // 점진적으로 강도 감소
         dangerIntensity *= 0.92; // 더 천천히 감소
-        if (dangerIntensity < 0.01) {
+        if (dangerIntensity < 0.1) {
             dangerIntensity = 0;
         }
+
+        // 위험 음악 업데이트
+        updateDangerMusic(dangerIntensity);
     }
 }
 
@@ -1369,6 +1557,29 @@ function startGame() {
     staminaBar.style.display = 'block';
     stamina = 100;
     updateStaminaBar();
+
+    // 🔥 메뉴 오버레이 제거 - 이 부분을 추가하세요
+    if (backgroundOverlay) {
+        backgroundOverlay.remove();
+    }
+    if (particleContainer) {
+        particleContainer.remove();
+    }
+
+    // 위험 상태 초기화
+    dangerMode = false;
+    dangerIntensity = 0;
+    dangerTimer = 0;
+
+    // 원래 조명/배경 상태로 복원
+    ambientLight.intensity = originalAmbientIntensity;
+    scene.background = new THREE.Color(originalBgColor);
+    directionalLight.intensity = 0.8;
+    directionalLight.position.set(10, 20, 10);
+    dangerLight.intensity = 0;
+
+    // 게임 시작 시 음악 전환
+    startGameMusic();
 
     // 난이도에 따른 설정
     let mazeSize;
