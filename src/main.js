@@ -156,17 +156,27 @@ function fadeIn(audio, targetVolume = 0.5, duration = 1.0) {
 let menuAudio, gameAudio, dangerAudio;
 
 // 모든 오디오 로드
-Promise.all([loadAudio('/audio/menu_bgm.mp3'), loadAudio('/audio/game_bgm.mp3'), loadAudio('/audio/danger_bgm.mp3')])
+Promise.all([
+    loadAudio('/audio/menu_bgm.mp3').catch(() => null),
+    loadAudio('/audio/game_bgm.mp3').catch(() => null),
+    loadAudio('/audio/danger_bgm.mp3').catch(() => null),
+])
     .then(([menu, game, danger]) => {
         menuAudio = menu;
         gameAudio = game;
         dangerAudio = danger;
 
-        // 메뉴 음악 자동 시작
-        menuBGM = playAudio(menuAudio, 0.5);
+        // 오디오 파일이 있을 때만 메뉴 음악 시작
+        if (menuAudio) {
+            console.log('오디오 로드 성공');
+            menuBGM = playAudio(menuAudio, 0.5);
+        } else {
+            console.log('오디오 파일이 없습니다. 무음 모드로 실행됩니다.');
+        }
     })
     .catch((error) => {
         console.error('오디오 로드 실패:', error);
+        console.log('무음 모드로 실행됩니다.');
     });
 
 // 게임 시작 시 음악 전환
@@ -175,37 +185,33 @@ function startGameMusic() {
         fadeOut(menuBGM, 1.0);
     }
     setTimeout(() => {
-        gameBGM = playAudio(gameAudio, 0.5);
+        if (gameAudio) {
+            gameBGM = playAudio(gameAudio, 0.5);
+        }
     }, 1000);
 }
 
-// 🔥 기존 updateDangerMusic 함수를 이것으로 완전히 교체하세요
+// 위험 상태에 따른 음악 전환 - 안전장치 추가
 function updateDangerMusic(intensity) {
     if (intensity > 0.1) {
-        // 위험 상황: 위험 음악 재생, 게임 음악 중단
-        if (!dangerBGM) {
-            // 게임 음악 중단
+        if (!dangerBGM && dangerAudio) {
+            // 🔥 dangerAudio 체크 추가
             if (gameBGM) {
                 fadeOut(gameBGM, 0.3);
                 gameBGM = null;
             }
-            // 위험 음악 시작
             dangerBGM = playAudio(dangerAudio, intensity * 0.5);
-        } else {
-            // 위험 음악 볼륨 조절
-            if (dangerBGM.gainNode) {
-                dangerBGM.gainNode.gain.setValueAtTime(intensity * 0.5, audioContext.currentTime);
-            }
+        } else if (dangerBGM && dangerBGM.gainNode) {
+            dangerBGM.gainNode.gain.setValueAtTime(intensity * 0.5, audioContext.currentTime);
         }
     } else {
-        // 안전 상황: 위험 음악 중단, 게임 음악 재생
         if (dangerBGM) {
             fadeOut(dangerBGM, 0.5);
             dangerBGM = null;
         }
 
-        // 게임 음악이 없으면 다시 시작
-        if (!gameBGM) {
+        if (!gameBGM && gameAudio) {
+            // 🔥 gameAudio 체크 추가
             setTimeout(() => {
                 gameBGM = playAudio(gameAudio, 0.5);
             }, 500);
