@@ -233,7 +233,7 @@ function updateStaminaBar() {
     staminaFill.style.width = `${stamina}%`;
 }
 
-// 미로 생성 함수 (반복문 기반)
+// 미로 생성 함수 (개선된 버전)
 function generateMaze(width, height) {
     // 미로 초기화 (모든 칸을 벽으로)
     const maze = Array.from({ length: height }, () => Array(width).fill(1));
@@ -241,48 +241,24 @@ function generateMaze(width, height) {
     // 시작점과 출구 위치 설정
     const startX = 1;
     const startZ = 1;
-    const exitX = width - 3; // 출구 위치 조정
-    const exitZ = height - 3; // 출구 위치 조정
+    const exitX = width - 3;
+    const exitZ = height - 3;
 
     // 시작점 설정
     maze[startZ][startX] = 0;
 
-    // 출구 생성 (3x3 크기)
-    for (let z = exitZ; z <= exitZ + 2; z++) {
-        for (let x = exitX; x <= exitX + 2; x++) {
-            maze[z][x] = 0;
-        }
-    }
-
-    // 시작점에서 출구까지의 기본 경로 생성
-    let x = startX;
-    let z = startZ;
-
-    // 오른쪽으로 이동
-    while (x < exitX - 1) {
-        x++;
-        maze[z][x] = 0;
-    }
-
-    // 아래로 이동
-    while (z < exitZ - 1) {
-        z++;
-        maze[z][x] = 0;
-    }
-
-    // 마지막 연결
-    maze[z][x + 1] = 0;
-    maze[z][x + 2] = 0;
-    maze[z][x + 3] = 0;
-
-    // DFS를 사용한 추가 경로 생성
+    // DFS를 사용한 미로 생성 (일직선 경로 제거)
     const stack = [];
     const visited = new Set();
+
+    // 시작점부터 미로 생성 시작
     stack.push([startX, startZ]);
     visited.add(`${startX},${startZ}`);
 
     while (stack.length > 0) {
         const [x, z] = stack[stack.length - 1];
+
+        // 4방향 랜덤 순서로 탐색
         const directions = [
             [0, -2], // 위
             [2, 0], // 오른쪽
@@ -296,11 +272,9 @@ function generateMaze(width, height) {
             const nz = z + dz;
             const key = `${nx},${nz}`;
 
-            // 출구 주변은 건너뛰기
-            if (Math.abs(nx - exitX) <= 3 && Math.abs(nz - exitZ) <= 3) continue;
-
+            // 경계 체크 및 방문 체크
             if (nz > 0 && nz < height - 1 && nx > 0 && nx < width - 1 && !visited.has(key)) {
-                // 벽 제거
+                // 벽 제거 (현재 위치와 다음 위치 사이)
                 maze[z + dz / 2][x + dx / 2] = 0;
                 maze[nz][nx] = 0;
 
@@ -317,36 +291,271 @@ function generateMaze(width, height) {
         }
     }
 
-    // 난이도에 따른 추가 통로 생성
-    const extraPathProbability = difficulty === 'easy' ? 0.25 : difficulty === 'medium' ? 0.15 : 0.08;
+    maze[exitZ][width - 1] = 0;
 
-    // 추가 통로 생성 (출구 주변 제외)
-    for (let z = 1; z < height - 1; z++) {
-        for (let x = 1; x < width - 1; x++) {
-            // 출구 주변 3칸은 건너뛰기
-            if (Math.abs(x - exitX) <= 3 && Math.abs(z - exitZ) <= 3) continue;
+    // 출구로의 연결 보장 (최소한의 연결만)
+    ensureExitConnection(maze, width, height, exitX, exitZ);
 
-            if (maze[z][x] === 1 && Math.random() < extraPathProbability) {
-                const dirs = [
-                    [0, -1],
-                    [0, 1],
-                    [-1, 0],
-                    [1, 0],
-                ].sort(() => Math.random() - 0.5);
+    // 난이도에 따른 추가 통로 생성 (더 신중하게)
+    addExtraPaths(maze, width, height, exitX, exitZ);
 
-                for (const [dx, dz] of dirs) {
-                    const nx = x + dx;
-                    const nz = z + dz;
-                    if (nx > 0 && nx < width - 1 && nz > 0 && nz < height - 1 && maze[nz][nx] === 0) {
-                        maze[z][x] = 0;
-                        break;
-                    }
+    // 막다른 길 제거 (선택적)
+    if (difficulty === 'easy') {
+        removeDeadEnds(maze, width, height, startX, startZ, exitX, exitZ);
+    }
+
+    return maze;
+}
+
+// 출구로의 연결을 보장하는 함수
+function ensureExitConnection(maze, width, height, exitX, exitZ) {
+    // 출구 주변에서 연결 가능한 지점 찾기
+    const connectionPoints = [];
+
+    // 출구 주변 체크
+    for (let z = exitZ - 1; z <= exitZ + 3; z++) {
+        for (let x = exitX - 1; x <= exitX + 3; x++) {
+            if (z >= 0 && z < height && x >= 0 && x < width && maze[z][x] === 0) {
+                // 출구 영역이 아닌 빈 공간이면 연결점 후보
+                if (!(x >= exitX && x <= exitX + 2 && z >= exitZ && z <= exitZ + 2)) {
+                    connectionPoints.push([x, z]);
                 }
             }
         }
     }
 
-    return maze;
+    // 가장 가까운 연결점과 출구를 연결
+    if (connectionPoints.length > 0) {
+        const closestPoint = connectionPoints.reduce((closest, point) => {
+            const distToCurrent = Math.abs(point[0] - exitX) + Math.abs(point[1] - exitZ);
+            const distToClosest = Math.abs(closest[0] - exitX) + Math.abs(closest[1] - exitZ);
+            return distToCurrent < distToClosest ? point : closest;
+        });
+
+        // 연결점과 출구 사이를 연결
+        connectPoints(maze, closestPoint[0], closestPoint[1], exitX + 1, exitZ + 1);
+    }
+}
+
+// 두 점을 연결하는 함수
+function connectPoints(maze, x1, z1, x2, z2) {
+    let x = x1;
+    let z = z1;
+
+    while (x !== x2 || z !== z2) {
+        maze[z][x] = 0;
+
+        if (x < x2) x++;
+        else if (x > x2) x--;
+        else if (z < z2) z++;
+        else if (z > z2) z--;
+    }
+    maze[z2][x2] = 0;
+}
+
+// 추가 통로 생성 함수 (더 신중하게)
+function addExtraPaths(maze, width, height, exitX, exitZ) {
+    const extraPathProbability = difficulty === 'easy' ? 0.2 : difficulty === 'medium' ? 0.08 : 0.04;
+
+    for (let z = 1; z < height - 1; z++) {
+        for (let x = 1; x < width - 1; x++) {
+            // 출구 주변 5칸은 건드리지 않기
+            if (Math.abs(x - exitX) <= 4 && Math.abs(z - exitZ) <= 4) continue;
+
+            // 시작점 주변 3칸도 너무 복잡하지 않게
+            if (Math.abs(x - 1) <= 2 && Math.abs(z - 1) <= 2 && Math.random() > 0.3) continue;
+
+            if (maze[z][x] === 1 && Math.random() < extraPathProbability) {
+                // 주변에 빈 공간이 있는지 확인
+                const neighbors = [
+                    [x, z - 1],
+                    [x, z + 1],
+                    [x - 1, z],
+                    [x + 1, z],
+                ];
+
+                const emptyNeighbors = neighbors.filter(
+                    ([nx, nz]) => nx > 0 && nx < width - 1 && nz > 0 && nz < height - 1 && maze[nz][nx] === 0
+                );
+
+                // 이지 모드에서는 더 관대하게 통로 생성
+                const maxConnections = difficulty === 'easy' ? 3 : 2;
+                if (emptyNeighbors.length >= 1 && emptyNeighbors.length <= maxConnections) {
+                    maze[z][x] = 0;
+                }
+            }
+        }
+    }
+
+    // 이지 모드 전용: 넓은 공간 생성
+    if (difficulty === 'easy') {
+        createOpenAreas(maze, width, height, exitX, exitZ);
+
+        // 벽 뭉침 제거
+        removeWallClusters(maze, width, height);
+
+        // 연결성 개선 (적이 막히지 않도록)
+        improveConnectivity(maze, width, height);
+    }
+}
+
+// 막다른 길 제거 함수 (쉬운 난이도용)
+function removeDeadEnds(maze, width, height, startX, startZ, exitX, exitZ) {
+    let changed = true;
+    let iterations = 0;
+    const maxIterations = 3; // 너무 많이 제거하지 않도록 제한
+
+    while (changed && iterations < maxIterations) {
+        changed = false;
+        iterations++;
+
+        for (let z = 1; z < height - 1; z++) {
+            for (let x = 1; x < width - 1; x++) {
+                // 시작점과 출구는 건드리지 않기
+                if ((x === startX && z === startZ) || (x === width - 1 && z === exitZ)) {
+                    continue;
+                }
+
+                if (maze[z][x] === 0) {
+                    // 주변 빈 공간 개수 세기
+                    const neighbors = [maze[z - 1][x], maze[z + 1][x], maze[z][x - 1], maze[z][x + 1]];
+
+                    const emptyCount = neighbors.filter((n) => n === 0).length;
+
+                    // 막다른 길이면 제거 (연결이 1개뿐인 경우)
+                    // 단, 50% 확률로만 제거 (일부 막다른 길은 유지)
+                    if (emptyCount === 1 && Math.random() < 0.5) {
+                        maze[z][x] = 1;
+                        changed = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 이지 모드 전용: 넓은 공간 생성
+function createOpenAreas(maze, width, height, exitX, exitZ) {
+    const areaCount = Math.floor((width * height) / 200); // 미로 크기에 비례한 넓은 공간 개수
+
+    for (let i = 0; i < areaCount; i++) {
+        // 랜덤한 위치에 2x2 또는 3x2 크기의 넓은 공간 생성
+        const centerX = Math.floor(Math.random() * (width - 6)) + 3;
+        const centerZ = Math.floor(Math.random() * (height - 6)) + 3;
+
+        // 출구나 시작점 주변은 피하기
+        if (
+            (Math.abs(centerX - 1) <= 3 && Math.abs(centerZ - 1) <= 3) ||
+            (Math.abs(centerX - exitX) <= 4 && Math.abs(centerZ - exitZ) <= 4)
+        ) {
+            continue;
+        }
+
+        // 넓은 공간 생성 (2x2 또는 3x2)
+        const sizeX = Math.random() < 0.7 ? 2 : 3;
+        const sizeZ = Math.random() < 0.8 ? 2 : 3;
+
+        for (let z = centerZ; z < centerZ + sizeZ && z < height - 1; z++) {
+            for (let x = centerX; x < centerX + sizeX && x < width - 1; x++) {
+                maze[z][x] = 0;
+            }
+        }
+    }
+}
+
+// 벽 뭉침 제거
+function removeWallClusters(maze, width, height) {
+    for (let z = 2; z < height - 2; z++) {
+        for (let x = 2; x < width - 2; x++) {
+            if (maze[z][x] === 1) {
+                // 3x3 영역에서 벽의 개수 체크
+                let wallCount = 0;
+                for (let dz = -1; dz <= 1; dz++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        if (maze[z + dz][x + dx] === 1) {
+                            wallCount++;
+                        }
+                    }
+                }
+
+                // 벽이 너무 많이 뭉쳐있으면 일부 제거
+                if (wallCount >= 7) {
+                    // 중앙의 벽을 제거할지 50% 확률로 결정
+                    if (Math.random() < 0.5) {
+                        maze[z][x] = 0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 연결성 개선 (적이 막히지 않도록)
+function improveConnectivity(maze, width, height) {
+    // flood fill로 연결된 영역들 찾기
+    const visited = Array.from({ length: height }, () => Array(width).fill(false));
+    const areas = [];
+
+    for (let z = 0; z < height; z++) {
+        for (let x = 0; x < width; x++) {
+            if (maze[z][x] === 0 && !visited[z][x]) {
+                const area = floodFill(maze, visited, x, z, width, height);
+                if (area.length > 3) {
+                    // 너무 작은 영역은 무시
+                    areas.push(area);
+                }
+            }
+        }
+    }
+
+    // 가장 큰 두 영역을 연결
+    if (areas.length >= 2) {
+        areas.sort((a, b) => b.length - a.length);
+        const area1 = areas[0];
+        const area2 = areas[1];
+
+        // 두 영역 사이의 최단 연결점 찾기
+        let minDist = Infinity;
+        let connectPoint1, connectPoint2;
+
+        for (const [x1, z1] of area1) {
+            for (const [x2, z2] of area2) {
+                const dist = Math.abs(x1 - x2) + Math.abs(z1 - z2);
+                if (dist < minDist) {
+                    minDist = dist;
+                    connectPoint1 = [x1, z1];
+                    connectPoint2 = [x2, z2];
+                }
+            }
+        }
+
+        // 연결 통로 생성
+        if (connectPoint1 && connectPoint2) {
+            connectPoints(maze, connectPoint1[0], connectPoint1[1], connectPoint2[0], connectPoint2[1]);
+        }
+    }
+}
+
+// Flood fill 함수
+function floodFill(maze, visited, startX, startZ, width, height) {
+    const stack = [[startX, startZ]];
+    const area = [];
+
+    while (stack.length > 0) {
+        const [x, z] = stack.pop();
+
+        if (x < 0 || x >= width || z < 0 || z >= height || visited[z][x] || maze[z][x] === 1) {
+            continue;
+        }
+
+        visited[z][x] = true;
+        area.push([x, z]);
+
+        // 4방향 탐색
+        stack.push([x + 1, z], [x - 1, z], [x, z + 1], [x, z - 1]);
+    }
+
+    return area;
 }
 
 // 초기 미로 생성
@@ -378,12 +587,27 @@ function buildMaze() {
 buildMaze();
 
 // 충돌 판정 함수
+
+// 충돌 판정 함수 수정 (기존 canMoveTo 함수 교체)
 function canMoveTo(x, z) {
     const mazeX = Math.round(x / wallSize + mazeMap[0].length / 2);
     const mazeZ = Math.round(z / wallSize + mazeMap.length / 2);
-    return (
-        mazeZ >= 0 && mazeZ < mazeMap.length && mazeX >= 0 && mazeX < mazeMap[0].length && mazeMap[mazeZ][mazeX] === 0
-    );
+
+    // 출구 위치 계산
+    const exitZ = mazeMap.length - 3;
+
+    // 출구를 통해 나가는 경우는 허용
+    if (mazeZ === exitZ && mazeX >= mazeMap[0].length - 1) {
+        return true; // 출구로 나가는 것 허용
+    }
+
+    // 미로 경계 밖으로 나가는 경우도 허용 (탈출을 위해)
+    if (mazeZ < 0 || mazeZ >= mazeMap.length || mazeX < 0 || mazeX >= mazeMap[0].length) {
+        return true; // 경계 밖 허용
+    }
+
+    // 미로 내부에서는 기존 로직대로
+    return mazeMap[mazeZ][mazeX] === 0;
 }
 
 // glTF 로더로 '나' 캐릭터 불러오기
@@ -670,15 +894,14 @@ function animate() {
     // --- 탈출 성공 판정 ---
     if (player) {
         // 출구 위치 계산
-        const exitX = mazeMap[0].length - 3;
         const exitZ = mazeMap.length - 3;
 
         // 플레이어 위치를 미로 좌표로 변환
         const px = Math.round(player.position.x / wallSize + mazeMap[0].length / 2);
         const pz = Math.round(player.position.z / wallSize + mazeMap.length / 2);
 
-        // 출구 영역에 있는지 확인 (3x3 영역)
-        if (Math.abs(px - exitX) <= 1 && Math.abs(pz - exitZ) <= 1) {
+        // 미로 경계를 넘어섰는지 확인 (완전히 나가야 성공)
+        if (px >= mazeMap[0].length || px < 0 || pz >= mazeMap.length || pz < 0) {
             escapeSuccess();
         }
     }
@@ -740,26 +963,14 @@ function gameOver() {
     }, 100);
 }
 
-// 탈출 성공 판정 수정
 function escapeSuccess() {
-    // 출구 위치 계산
-    const exitX = mazeMap[0].length - 3;
-    const exitZ = mazeMap.length - 3;
-
-    // 플레이어 위치를 미로 좌표로 변환
-    const px = Math.round(player.position.x / wallSize + mazeMap[0].length / 2);
-    const pz = Math.round(player.position.z / wallSize + mazeMap.length / 2);
-
-    // 출구 영역에 있는지 확인 (3x3 영역)
-    if (Math.abs(px - exitX) <= 1 && Math.abs(pz - exitZ) <= 1) {
-        gameState = 'gameover';
-        gameEnded = true;
-        uiDiv.style.display = 'block';
-        uiDivText.textContent = '탈출 성공!';
-        setTimeout(() => {
-            document.exitPointerLock?.();
-        }, 100);
-    }
+    gameState = 'gameover';
+    gameEnded = true;
+    uiDiv.style.display = 'block';
+    uiDivText.textContent = '탈출 성공!';
+    setTimeout(() => {
+        document.exitPointerLock?.();
+    }, 100);
 }
 
 animate();
