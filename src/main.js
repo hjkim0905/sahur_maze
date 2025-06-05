@@ -1448,10 +1448,25 @@ function animate() {
             moveDir.normalize();
             const nextX = player.position.x + moveDir.x * currentSpeed;
             const nextZ = player.position.z + moveDir.z * currentSpeed;
-            if (canMoveTo(nextX, nextZ)) {
+
+            // 벽과의 충돌 체크 및 미끄러짐 효과
+            if (!canMoveTo(nextX, nextZ)) {
+                // X축과 Z축 각각에 대해 충돌 체크
+                const canMoveX = canMoveTo(nextX, player.position.z);
+                const canMoveZ = canMoveTo(player.position.x, nextZ);
+
+                // 벽에 부딪혔을 때 미끄러지는 효과
+                if (canMoveX) {
+                    player.position.x = nextX;
+                }
+                if (canMoveZ) {
+                    player.position.z = nextZ;
+                }
+            } else {
                 player.position.x = nextX;
                 player.position.z = nextZ;
             }
+
             // 이동 방향으로 모델의 앞을 맞추기
             const targetAngle = Math.atan2(moveDir.x, moveDir.z);
             player.rotation.y = targetAngle;
