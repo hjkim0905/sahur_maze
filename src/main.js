@@ -399,6 +399,8 @@ difficultyDiv.style.background = 'rgba(0, 0, 0, 0.3)';
 difficultyDiv.style.padding = '1.2rem';
 difficultyDiv.style.borderRadius = '15px';
 difficultyDiv.style.border = '1px solid rgba(139, 69, 19, 0.4)';
+difficultyDiv.style.maxHeight = '80vh'; // 최대 높이를 뷰포트 높이의 80%로 제한
+difficultyDiv.style.overflowY = 'auto'; // 내용이 넘칠 경우 스크롤 가능
 
 const difficultyLabel = document.createElement('div');
 difficultyLabel.textContent = '⚔️ 난이도 선택';
@@ -1828,6 +1830,7 @@ tutorialModal.style.zIndex = '200';
 tutorialModal.style.alignItems = 'center';
 tutorialModal.style.justifyContent = 'center';
 tutorialModal.style.animation = 'fadeIn 0.3s ease-in-out';
+tutorialModal.style.overflowY = 'auto'; // 스크롤 가능하도록 설정
 
 // 모달 내용
 const tutorialContent = document.createElement('div');
@@ -1836,6 +1839,8 @@ tutorialContent.style.borderRadius = '20px';
 tutorialContent.style.padding = '2rem';
 tutorialContent.style.maxWidth = '600px';
 tutorialContent.style.width = '90%';
+tutorialContent.style.maxHeight = '90vh'; // 최대 높이를 뷰포트 높이의 90%로 제한
+tutorialContent.style.overflowY = 'auto'; // 내용이 넘칠 경우 스크롤 가능
 tutorialContent.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5)';
 tutorialContent.style.border = '2px solid rgba(255, 255, 255, 0.1)';
 tutorialContent.style.backdropFilter = 'blur(10px)';
