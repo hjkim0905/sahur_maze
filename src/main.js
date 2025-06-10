@@ -46,82 +46,13 @@ let originalCameraTarget = new THREE.Vector3();
 let mazeMap;
 const wallSize = 2; // 벽 하나의 크기(2x2x2)
 const wallHeight = 2; // 벽의 높이(2)
-
-// 벽 재질 개선
+const wallGeometry = new THREE.BoxGeometry(wallSize, wallHeight, wallSize);
 const wallMaterial = new THREE.MeshStandardMaterial({
     color: 0x8b4513, // 갈색 벽
-    roughness: 0.8,
-    metalness: 0.1,
+    roughness: 0.7,
+    metalness: 0.2,
     transparent: false,
-    bumpScale: 0.1,
-    displacementScale: 0.1,
 });
-
-// 벽돌 패턴을 위한 텍스처 로더
-const textureLoader = new THREE.TextureLoader();
-
-// 벽돌 텍스처 로드
-textureLoader.load('/textures/brick_diffuse.jpg', (diffuseMap) => {
-    textureLoader.load('/textures/brick_normal.jpg', (normalMap) => {
-        textureLoader.load('/textures/brick_roughness.jpg', (roughnessMap) => {
-            textureLoader.load('/textures/brick_displacement.jpg', (displacementMap) => {
-                wallMaterial.map = diffuseMap;
-                wallMaterial.normalMap = normalMap;
-                wallMaterial.roughnessMap = roughnessMap;
-                wallMaterial.displacementMap = displacementMap;
-                wallMaterial.needsUpdate = true;
-            });
-        });
-    });
-});
-
-// 벽 지오메트리 개선
-const wallGeometry = new THREE.BoxGeometry(wallSize, wallHeight, wallSize);
-// 벽돌 패턴을 위한 UV 매핑 조정
-wallGeometry.attributes.uv2 = wallGeometry.attributes.uv;
-
-// 벽 생성 함수 수정
-function createWall(x, z) {
-    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-
-    // 벽 위치 설정
-    wall.position.set((x - mazeMap[z].length / 2) * wallSize, wallHeight / 2, (z - mazeMap.length / 2) * wallSize);
-
-    // 벽 상단에 장식 추가
-    const topDecoration = new THREE.Mesh(
-        new THREE.BoxGeometry(wallSize, 0.2, wallSize),
-        new THREE.MeshStandardMaterial({
-            color: 0x6b4423,
-            roughness: 0.7,
-            metalness: 0.2,
-        })
-    );
-    topDecoration.position.y = wallHeight / 2 + 0.1;
-    wall.add(topDecoration);
-
-    // 벽 하단에 장식 추가
-    const bottomDecoration = new THREE.Mesh(
-        new THREE.BoxGeometry(wallSize, 0.2, wallSize),
-        new THREE.MeshStandardMaterial({
-            color: 0x6b4423,
-            roughness: 0.7,
-            metalness: 0.2,
-        })
-    );
-    bottomDecoration.position.y = -wallHeight / 2 - 0.1;
-    wall.add(bottomDecoration);
-
-    // 그림자 설정
-    wall.castShadow = true;
-    wall.receiveShadow = true;
-    topDecoration.castShadow = true;
-    topDecoration.receiveShadow = true;
-    bottomDecoration.castShadow = true;
-    bottomDecoration.receiveShadow = true;
-
-    return wall;
-}
-
 let wallMeshes = [];
 
 // 씬, 카메라, 렌더러 생성
@@ -854,13 +785,8 @@ function generateMaze(width, height) {
     const exitX = width - 3;
     const exitZ = height - 3;
 
-    // 적의 초기 위치 설정 (미로의 (1, height-2) 위치)
-    const enemyX = 1;
-    const enemyZ = height - 2;
-
-    // 시작점과 적의 초기 위치만 설정
+    // 시작점 설정
     maze[startZ][startX] = 0;
-    maze[enemyZ][enemyX] = 0;
 
     // DFS를 사용한 미로 생성 (일직선 경로 제거)
     const stack = [];
@@ -1277,11 +1203,17 @@ function buildMaze() {
     // 기존 벽 제거
     for (const mesh of wallMeshes) scene.remove(mesh);
     wallMeshes = [];
-
     for (let z = 0; z < mazeMap.length; z++) {
         for (let x = 0; x < mazeMap[z].length; x++) {
             if (mazeMap[z][x] === 1) {
-                const wall = createWall(x, z);
+                const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+                wall.position.set(
+                    (x - mazeMap[z].length / 2) * wallSize,
+                    wallHeight / 2,
+                    (z - mazeMap.length / 2) * wallSize
+                );
+                wall.castShadow = true;
+                wall.receiveShadow = true;
                 scene.add(wall);
                 wallMeshes.push(wall);
             }
