@@ -712,26 +712,87 @@ uiDiv.style.textAlign = 'center';
 const uiDivText = document.createElement('div');
 uiDiv.appendChild(uiDivText);
 
-const resetBtn = document.createElement('button');
-resetBtn.textContent = '다시 시작';
-resetBtn.style.fontSize = '2rem';
-resetBtn.style.marginTop = '2rem';
-resetBtn.style.padding = '0.5em 1.5em';
-resetBtn.style.borderRadius = '1em';
-resetBtn.style.border = 'none';
-resetBtn.style.background = '#222';
-resetBtn.style.color = '#fff';
-resetBtn.style.cursor = 'pointer';
-resetBtn.style.display = 'block';
-resetBtn.onclick = () => {
-    uiDiv.style.display = 'none';
-    menuDiv.style.display = 'block';
-    gameState = 'menu';
-    gameEnded = false;
-    document.exitPointerLock?.();
+// 게임 중 컨트롤 UI
+const gameControlsDiv = document.createElement('div');
+gameControlsDiv.style.position = 'fixed';
+gameControlsDiv.style.top = '20px';
+gameControlsDiv.style.right = '20px';
+gameControlsDiv.style.zIndex = '100';
+gameControlsDiv.style.display = 'none'; // 초기에는 숨김
+gameControlsDiv.style.gap = '10px';
+gameControlsDiv.style.flexDirection = 'column';
+
+// 홈 버튼
+const homeBtn = document.createElement('button');
+homeBtn.textContent = '🏠 홈';
+homeBtn.style.padding = '0.8em 1.5em';
+homeBtn.style.borderRadius = '25px';
+homeBtn.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+homeBtn.style.background = 'linear-gradient(135deg, rgba(33, 150, 243, 0.8), rgba(21, 101, 192, 0.9))';
+homeBtn.style.color = '#fff';
+homeBtn.style.cursor = 'pointer';
+homeBtn.style.fontFamily = '"Roboto", sans-serif';
+homeBtn.style.fontWeight = '600';
+homeBtn.style.fontSize = '1.2rem';
+homeBtn.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.5)';
+homeBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+homeBtn.style.transition = 'all 0.3s ease';
+
+homeBtn.onmouseover = () => {
+    homeBtn.style.transform = 'translateY(-2px) scale(1.05)';
+    homeBtn.style.boxShadow = '0 8px 25px rgba(33, 150, 243, 0.4)';
 };
-uiDiv.appendChild(resetBtn);
-document.body.appendChild(uiDiv);
+homeBtn.onmouseout = () => {
+    homeBtn.style.transform = 'translateY(0) scale(1)';
+    homeBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+};
+homeBtn.onclick = () => {
+    document.exitPointerLock?.();
+    gameState = 'menu';
+    menuDiv.style.display = 'block';
+    gameControlsDiv.style.display = 'none';
+    staminaBar.style.display = 'none';
+    if (gameBGM) {
+        fadeOut(gameBGM, 1.0);
+    }
+    setTimeout(() => {
+        if (menuAudio) {
+            menuBGM = playAudio(menuAudio, 0.5);
+        }
+    }, 1000);
+};
+
+// 리플레이 버튼
+const replayBtn = document.createElement('button');
+replayBtn.textContent = '🔄 다시하기';
+replayBtn.style.padding = '0.8em 1.5em';
+replayBtn.style.borderRadius = '25px';
+replayBtn.style.border = '2px solid rgba(255, 255, 255, 0.3)';
+replayBtn.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.8), rgba(56, 142, 60, 0.9))';
+replayBtn.style.color = '#fff';
+replayBtn.style.cursor = 'pointer';
+replayBtn.style.fontFamily = '"Roboto", sans-serif';
+replayBtn.style.fontWeight = '600';
+replayBtn.style.fontSize = '1.2rem';
+replayBtn.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.5)';
+replayBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+replayBtn.style.transition = 'all 0.3s ease';
+
+replayBtn.onmouseover = () => {
+    replayBtn.style.transform = 'translateY(-2px) scale(1.05)';
+    replayBtn.style.boxShadow = '0 8px 25px rgba(76, 175, 80, 0.4)';
+};
+replayBtn.onmouseout = () => {
+    replayBtn.style.transform = 'translateY(0) scale(1)';
+    replayBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+};
+replayBtn.onclick = () => {
+    startGame();
+};
+
+gameControlsDiv.appendChild(homeBtn);
+gameControlsDiv.appendChild(replayBtn);
+document.body.appendChild(gameControlsDiv);
 
 // 스태미나 UI
 const staminaBar = document.createElement('div');
@@ -1577,6 +1638,7 @@ function startGame() {
     gameState = 'playing';
     menuDiv.style.display = 'none';
     uiDiv.style.display = 'none';
+    gameControlsDiv.style.display = 'flex'; // 게임 시작할 때만 표시
     staminaBar.style.display = 'block';
     stamina = 100;
     updateStaminaBar();
