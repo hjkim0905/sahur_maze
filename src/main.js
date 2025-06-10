@@ -712,6 +712,28 @@ uiDiv.style.textAlign = 'center';
 const uiDivText = document.createElement('div');
 uiDiv.appendChild(uiDivText);
 
+// 게임오버/성공 시 다시 시작 버튼
+const resetBtn = document.createElement('button');
+resetBtn.textContent = '다시 시작';
+resetBtn.style.fontSize = '2rem';
+resetBtn.style.marginTop = '2rem';
+resetBtn.style.padding = '0.5em 1.5em';
+resetBtn.style.borderRadius = '1em';
+resetBtn.style.border = 'none';
+resetBtn.style.background = '#222';
+resetBtn.style.color = '#fff';
+resetBtn.style.cursor = 'pointer';
+resetBtn.style.display = 'block';
+resetBtn.onclick = () => {
+    uiDiv.style.display = 'none';
+    menuDiv.style.display = 'block';
+    gameState = 'menu';
+    gameEnded = false;
+    document.exitPointerLock?.();
+};
+uiDiv.appendChild(resetBtn);
+document.body.appendChild(uiDiv);
+
 // 게임 중 컨트롤 UI
 const gameControlsDiv = document.createElement('div');
 gameControlsDiv.style.position = 'fixed';
@@ -1741,8 +1763,20 @@ function gameOver() {
     setTimeout(() => {
         uiDiv.style.display = 'block';
         uiDivText.textContent = 'GAME OVER!';
+        gameControlsDiv.style.display = 'none'; // 게임 컨트롤 UI 숨기기
         document.exitPointerLock?.();
     }, 2000);
+}
+
+function escapeSuccess() {
+    gameState = 'gameover';
+    gameEnded = true;
+    uiDiv.style.display = 'block';
+    uiDivText.textContent = '탈출 성공!';
+    gameControlsDiv.style.display = 'none'; // 게임 컨트롤 UI 숨기기
+    setTimeout(() => {
+        document.exitPointerLock?.();
+    }, 100);
 }
 
 // updateGameOverCamera 함수를 이렇게 수정하세요!
@@ -1816,16 +1850,6 @@ function updateGameOverCamera() {
         directionalLight.intensity = 1.2;
         scene.background = new THREE.Color(0x2a2a2a);
     }
-}
-
-function escapeSuccess() {
-    gameState = 'gameover';
-    gameEnded = true;
-    uiDiv.style.display = 'block';
-    uiDivText.textContent = '탈출 성공!';
-    setTimeout(() => {
-        document.exitPointerLock?.();
-    }, 100);
 }
 
 animate();
