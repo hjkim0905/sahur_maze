@@ -61,7 +61,8 @@ scene.background = new THREE.Color(0x87ceeb); // 하늘색 배경
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+const MAX_PIXEL_RATIO = 2;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
 renderer.shadowMap.enabled = true; // 그림자 활성화
 
 // 조명 추가
@@ -466,7 +467,6 @@ difficulties.forEach((diff) => {
 });
 menuDiv.appendChild(difficultyDiv);
 
-// 시작 버튼
 // 시작 버튼
 const startBtn = document.createElement('button');
 startBtn.textContent = '게임 시작';
@@ -1439,8 +1439,11 @@ function astar(maze, start, goal) {
         [0, -1],
     ];
     while (open.length) {
-        open.sort((a, b) => a.f - b.f);
-        const { x, z } = open.shift();
+        let minIdx = 0;
+        for (let i = 1; i < open.length; i++) {
+            if (open[i].f < open[minIdx].f) minIdx = i;
+        }
+        const { x, z } = open.splice(minIdx, 1)[0];
         if (x === gx && z === gz) {
             // 경로 복원
             const path = [];
@@ -1859,6 +1862,7 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
 });
 
 // body 스타일로 스크롤 금지 및 전체화면
