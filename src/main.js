@@ -196,7 +196,6 @@ function startGameMusic() {
 function updateDangerMusic(intensity) {
     if (intensity > 0.1) {
         if (!dangerBGM && dangerAudio) {
-            // 🔥 dangerAudio 체크 추가
             if (gameBGM) {
                 fadeOut(gameBGM, 0.3);
                 gameBGM = null;
@@ -212,7 +211,6 @@ function updateDangerMusic(intensity) {
         }
 
         if (!gameBGM && gameAudio) {
-            // 🔥 gameAudio 체크 추가
             setTimeout(() => {
                 gameBGM = playAudio(gameAudio, 0.5);
             }, 500);
@@ -1182,7 +1180,6 @@ function floodFill(maze, visited, startX, startZ, width, height) {
     return area;
 }
 
-// 기존 위험 상태 관리 함수를 이걸로 교체하세요!
 function updateDangerMode(playerPos, enemyPos) {
     if (!playerPos || !enemyPos) return;
 
@@ -1224,7 +1221,6 @@ function updateDangerMode(playerPos, enemyPos) {
     }
 }
 
-// 기존 위험 조명 효과 함수를 이걸로 교체하세요!
 function applyDangerLighting() {
     if (dangerIntensity > 0) {
         dangerTimer += 1 / 60; // 60fps 기준
@@ -1668,7 +1664,6 @@ function startGame() {
     stamina = 100;
     updateStaminaBar();
 
-    // 🔥 메뉴 오버레이 제거 - 이 부분을 추가하세요
     if (backgroundOverlay) {
         backgroundOverlay.remove();
     }
@@ -1782,7 +1777,6 @@ function escapeSuccess() {
     }, 100);
 }
 
-// updateGameOverCamera 함수를 이렇게 수정하세요!
 function updateGameOverCamera() {
     if (!gameOverCameraTransition || !enemy || !player) return;
 
