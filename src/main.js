@@ -853,6 +853,13 @@ function updateDifficultyButtons() {
 // 스태미나 바 업데이트
 function updateStaminaBar() {
     staminaFill.style.width = `${stamina}%`;
+    if (stamina > 50) {
+        staminaFill.style.background = '#4CAF50';
+    } else if (stamina > 25) {
+        staminaFill.style.background = '#FF9800';
+    } else {
+        staminaFill.style.background = '#F44336';
+    }
 }
 
 // 미로 생성 함수 (개선된 버전)
@@ -1303,9 +1310,6 @@ function buildMaze() {
 // 초기 미로 구축
 buildMaze();
 
-// 충돌 판정 함수
-
-// 충돌 판정 함수 수정 (기존 canMoveTo 함수 교체)
 function canMoveTo(x, z) {
     const mazeX = Math.round(x / wallSize + mazeMap[0].length / 2);
     const mazeZ = Math.round(z / wallSize + mazeMap.length / 2);
