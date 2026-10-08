@@ -1501,7 +1501,8 @@ function animate() {
     if (player) {
         // 스태미나 관리
         if (isRunning && stamina > 0) {
-            stamina -= 0.5;
+            stamina = Math.max(0, stamina - 0.5);
+            staminaRegenTimer = 0;
             updateStaminaBar();
         } else if (!isRunning && stamina < 100) {
             staminaRegenTimer += 1 / 60;
