@@ -1766,7 +1766,8 @@ function gameOver() {
     setTimeout(() => {
         uiDiv.style.display = 'block';
         uiDivText.textContent = 'GAME OVER!';
-        gameControlsDiv.style.display = 'none'; // 게임 컨트롤 UI 숨기기
+        gameControlsDiv.style.display = 'none';
+        staminaBar.style.display = 'none';
         document.exitPointerLock?.();
     }, 2000);
 }
@@ -1776,7 +1777,8 @@ function escapeSuccess() {
     gameEnded = true;
     uiDiv.style.display = 'block';
     uiDivText.textContent = '탈출 성공!';
-    gameControlsDiv.style.display = 'none'; // 게임 컨트롤 UI 숨기기
+    gameControlsDiv.style.display = 'none';
+    staminaBar.style.display = 'none';
     setTimeout(() => {
         document.exitPointerLock?.();
     }, 100);
