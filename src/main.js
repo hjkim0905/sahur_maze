@@ -1667,6 +1667,12 @@ function startGame() {
     gameControlsDiv.style.display = 'flex'; // 게임 시작할 때만 표시
     staminaBar.style.display = 'block';
     stamina = 100;
+    isRunning = false;
+    staminaRegenTimer = 0;
+    move.forward = false;
+    move.backward = false;
+    move.left = false;
+    move.right = false;
     updateStaminaBar();
 
     if (backgroundOverlay) {
@@ -1773,6 +1779,7 @@ function gameOver() {
 }
 
 function escapeSuccess() {
+    if (gameEnded) return;
     gameState = 'gameover';
     gameEnded = true;
     uiDiv.style.display = 'block';
