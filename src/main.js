@@ -1357,6 +1357,9 @@ camera.position.set(0, 2, 10);
 
 // WASD 입력 처리
 window.addEventListener('keydown', (e) => {
+    if (['KeyW', 'KeyS', 'KeyA', 'KeyD', 'ShiftLeft'].includes(e.code)) {
+        e.preventDefault();
+    }
     if (e.code === 'KeyW') move.forward = true;
     if (e.code === 'KeyS') move.backward = true;
     if (e.code === 'KeyA') move.left = true;
@@ -1708,6 +1711,9 @@ function startGame() {
             break;
         case 'hard':
             mazeSize = { width: 45, height: 35 }; // 더 큰 미로
+            break;
+        default:
+            mazeSize = { width: 35, height: 25 };
             break;
     }
 
